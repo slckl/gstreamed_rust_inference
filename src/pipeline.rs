@@ -32,7 +32,7 @@ fn file_src_bin(input_file: &str) -> Result<gst::Element, glib::BoolError> {
     // create a glib weak ref to queue, so we can safely look it up inside callback.
     let queue_weak = queue.downgrade();
     decode_bin.connect_pad_added(move |_decode_bin, pad| {
-        // check if queue's still around, it should
+        // check if queue's still around, it should be
         if let Some(queue) = queue_weak.upgrade() {
             let sink_pad = queue
                 .compatible_pad(pad, None)
@@ -59,7 +59,9 @@ pub fn build_pipeline(input_file: &str, model: YoloV8) -> Result<gst::Pipeline, 
     queue_src.add_probe(PadProbeType::BUFFER, move |_pad, pad_probe_info| {
         // we're interested in the buffer
         if let Some(PadProbeData::Buffer(buffer)) = &pad_probe_info.data {
-            // TODO read this into an image
+            // TODO read this into a DynamicImage
+            // TODO call inference::process_frame
+            // TODO overwrite the buffer with the processed frame
             println!("TODO actually do yolo stuff");
         }
 

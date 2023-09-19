@@ -166,9 +166,9 @@ checksum = "14c189c53d098945499cdfa7ecc63567cf3886b3332b312a5b4585d8d3a6a610"
 
 [[package]]
 name = "candle-core"
-version = "0.2.1"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d54bfcd86ef61f5ceb73aa43a49d08e395503e6c79f12ae8f5ed4695dd33b84e"
+checksum = "d648a16c5e5a9ffa4a6630e13d32b6d7c106f6885fd6d8453e1d8b405c390322"
 dependencies = [
  "byteorder",
  "candle-gemm",
@@ -183,14 +183,15 @@ dependencies = [
  "rayon",
  "safetensors",
  "thiserror",
+ "yoke",
  "zip",
 ]
 
 [[package]]
 name = "candle-gemm"
-version = "0.15.6"
+version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "26b726a1f6cdd7ff080e95e3d91694701b1e04a58acd198e4a78c39428b2274e"
+checksum = "ef9b07a4b0ba1a304b44432006580980ddff9748c201261c279437e7b11bba68"
 dependencies = [
  "candle-gemm-c32",
  "candle-gemm-c64",
@@ -210,9 +211,9 @@ dependencies = [
 
 [[package]]
 name = "candle-gemm-c32"
-version = "0.15.6"
+version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "661470663389f0c99fd8449e620bfae630a662739f830a323eda4dcf80888843"
+checksum = "f595241dad99811de285e029889f57c29dd98e33de7a8a6b881867b1488d7d4a"
 dependencies = [
  "candle-gemm-common",
  "dyn-stack",
@@ -227,9 +228,9 @@ dependencies = [
 
 [[package]]
 name = "candle-gemm-c64"
-version = "0.15.6"
+version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4a111ddf61db562854a6d2ff4dfe1e8a84066431b7bc68d3afae4bf60874fda0"
+checksum = "648f22fd8f5a4f330e29d791845b514966421308a6a2b5fedb949ee07e54c77f"
 dependencies = [
  "candle-gemm-common",
  "dyn-stack",
@@ -244,9 +245,9 @@ dependencies = [
 
 [[package]]
 name = "candle-gemm-common"
-version = "0.15.6"
+version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5a6dd93783ead7eeef14361667ea32014dc6f716a2fc956b075fe78729e10dd5"
+checksum = "e03c01b4ca3b9d71e4eb89e42946a08f8b0d2f1b861f7fa2ea0966233f1e0b08"
 dependencies = [
  "dyn-stack",
  "lazy_static",
@@ -260,9 +261,9 @@ dependencies = [
 
 [[package]]
 name = "candle-gemm-f16"
-version = "0.15.6"
+version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b76499bf4b858cacc526c5c8f948bc7152774247dce8568f174b743ab1363fa4"
+checksum = "97f8af2a482131713d28a337abff6debf26c529afa1837caf2ba190909b2107c"
 dependencies = [
  "candle-gemm-common",
  "candle-gemm-f32",
@@ -279,9 +280,9 @@ dependencies = [
 
 [[package]]
 name = "candle-gemm-f32"
-version = "0.15.6"
+version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7bec152e7d36339d3785e0d746d75ee94a4e92968fbb12ddcc91b536b938d016"
+checksum = "938927961e2f0c0a6064fcf3524ea3f7f455fe5708419532a6fea9aea1ab45ae"
 dependencies = [
  "candle-gemm-common",
  "dyn-stack",
@@ -296,9 +297,9 @@ dependencies = [
 
 [[package]]
 name = "candle-gemm-f64"
-version = "0.15.6"
+version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "00f59ac68a5521e2ff71431bb7f1b22126ff0b60c5e66599b1f4676433da6e69"
+checksum = "d192d7126e59b81ef4cf13cd9f194e6dbdc09171f65d0074d059dc009ac06775"
 dependencies = [
  "candle-gemm-common",
  "dyn-stack",
@@ -313,23 +314,24 @@ dependencies = [
 
 [[package]]
 name = "candle-nn"
-version = "0.2.1"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f6eb07d8734b7f288b6c518d9a284167cda2a307dbbdbc610350aa7e8fa8729"
+checksum = "00e438605fbbd1235dbfc5b10beda5ebe4bb0a19969b864a85b922c97ac9f686"
 dependencies = [
  "candle-core",
  "half",
  "num-traits",
  "rayon",
  "safetensors",
+ "serde",
  "thiserror",
 ]
 
 [[package]]
 name = "candle-transformers"
-version = "0.2.1"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "63ba8a957508a9e993cc3881dc9bc85b133d482be89c988b7d9e6fb7001ee88f"
+checksum = "196742c5676b9af54c782304609f3e480c871e5588451d9806b2df8fc11e324c"
 dependencies = [
  "candle-core",
  "candle-nn",
@@ -1276,6 +1278,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f49388d20533534cd19360ad3d6a7dadc885944aa802ba3995040c5ec11288c6"
 dependencies = [
  "libc",
+ "stable_deref_trait",
 ]
 
 [[package]]
@@ -2103,6 +2106,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
 
 [[package]]
+name = "stable_deref_trait"
+version = "1.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
+
+[[package]]
 name = "strsim"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2128,6 +2137,18 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "synstructure"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "285ba80e733fac80aa4270fbcdf83772a79b80aa35c97075320abfee4a915b06"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.36",
+ "unicode-xid",
 ]
 
 [[package]]
@@ -2321,6 +2342,12 @@ name = "unicode-width"
 version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e51733f11c9c4f72aa0c160008246859e340b00807569a0da0e7a1079b27ba85"
+
+[[package]]
+name = "unicode-xid"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f962df74c8c05a667b5ee8bcf162993134c104e96440b663c8daa176dc772d8c"
 
 [[package]]
 name = "untrusted"
@@ -2693,6 +2720,51 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f4686009f71ff3e5c4dbcf1a282d0a44db3f021ba69350cd42086b3e5f1c6985"
 dependencies = [
  "libc",
+]
+
+[[package]]
+name = "yoke"
+version = "0.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "61e38c508604d6bbbd292dadb3c02559aa7fff6b654a078a36217cad871636e4"
+dependencies = [
+ "serde",
+ "stable_deref_trait",
+ "yoke-derive",
+ "zerofrom",
+]
+
+[[package]]
+name = "yoke-derive"
+version = "0.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d5e19fb6ed40002bab5403ffa37e53e0e56f914a4450c8765f533018db1db35f"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.36",
+ "synstructure",
+]
+
+[[package]]
+name = "zerofrom"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "655b0814c5c0b19ade497851070c640773304939a6c0fd5f5fb43da0696d05b7"
+dependencies = [
+ "zerofrom-derive",
+]
+
+[[package]]
+name = "zerofrom-derive"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e6a647510471d372f2e6c2e6b7219e44d8c574d24fdc11c610a61455782f18c3"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.36",
+ "synstructure",
 ]
 
 [[package]]

@@ -46,9 +46,12 @@ pub fn load_model(which: Which) -> anyhow::Result<YoloV8> {
         Which::X => Multiples::x(),
     };
     let model = model(which)?;
-    let weights = unsafe { candle_core::safetensors::MmapedFile::new(model)? };
-    let weights = weights.deserialize()?;
-    let vb = VarBuilder::from_safetensors(vec![weights], DType::F32, &Device::Cpu);
+    let vb = unsafe {
+        VarBuilder::from_mmaped_safetensors(&[model], DType::F32, &Device::Cpu)?
+    };
+    // let weights = unsafe { candle_core::safetensors::MmapedFile::new(model)? };
+    // let weights = weights.deserialize()?;
+    // let vb = VarBuilder::from_safetensors(vec![weights], DType::F32, &Device::Cpu);
     let model = YoloV8::load(vb, multiples, 80)?;
     Ok(model)
 }
