@@ -1,6 +1,9 @@
+mod coco_classes;
+mod inference;
 mod pipeline;
 mod yolov8;
 
+use crate::inference::Which;
 use clap::Parser;
 use gstreamer as gst;
 use gstreamer::prelude::*;
@@ -19,10 +22,14 @@ fn main() -> anyhow::Result<()> {
 
     gst::init().unwrap();
 
+    // load models first
+    let which = Which::S;
+    let model = inference::load_model(which)?;
+
     // TODO pipe gst logs to some rust log handler
 
     // build pipeline
-    let pipeline = build_pipeline(&args.input)?;
+    let pipeline = build_pipeline(&args.input, model)?;
     // make it play and listen to events to know when it's done
     pipeline.set_state(gst::State::Playing).unwrap();
 

@@ -12,4 +12,7 @@ candle-nn = { version = "0.2.1" }
 candle-transformers = { version = "0.2.1" }
 clap = { version = "4.4.3", features = ["derive"] }
 gstreamer = { version = "0.21.0" }
-image = { version = "0.24.7" }
+hf-hub = "0.3.0"
+image = { version = "0.24.7", default-features = false, features = ["jpeg", "png"] }
+imageproc = { version = "0.23.0", default-features = false }
+rusttype = { version = "0.9", default-features = false }

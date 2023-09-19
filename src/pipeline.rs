@@ -1,6 +1,7 @@
+use crate::yolov8::YoloV8;
 use gstreamer as gst;
-use gstreamer::{glib, PadProbeData, PadProbeReturn, PadProbeType};
 use gstreamer::prelude::*;
+use gstreamer::{glib, PadProbeData, PadProbeReturn, PadProbeType};
 
 fn file_src_bin(input_file: &str) -> Result<gst::Element, glib::BoolError> {
     let bin = gst::Bin::new();
@@ -47,7 +48,7 @@ fn file_src_bin(input_file: &str) -> Result<gst::Element, glib::BoolError> {
 }
 
 // filesrc -> decodebin -> [candle] -> queue -> encode -> mkvmux
-pub fn build_pipeline(input_file: &str) -> Result<gst::Pipeline, glib::BoolError> {
+pub fn build_pipeline(input_file: &str, model: YoloV8) -> Result<gst::Pipeline, glib::BoolError> {
     let pipeline = gst::Pipeline::new();
 
     // filesrc -> [candle] -> queue -> encode -> mkvmux
