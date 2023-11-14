@@ -3,6 +3,7 @@ mod inference;
 mod pipeline;
 mod yolov8;
 
+use candle_core::{CudaDevice, Device};
 use crate::inference::Which;
 use clap::Parser;
 use gstreamer as gst;
@@ -22,14 +23,17 @@ fn main() -> anyhow::Result<()> {
 
     gst::init().unwrap();
 
+    // let device = Device::Cpu;
+    let device = Device::new_cuda(0).unwrap();
+
     // load models first
     let which = Which::S;
-    let model = inference::load_model(which)?;
+    let model = inference::load_model(which, &device)?;
 
     // TODO pipe gst logs to some rust log handler
 
     // build pipeline
-    let pipeline = build_pipeline(&args.input, model)?;
+    let pipeline = build_pipeline(&args.input, model, device)?;
     // make it play and listen to events to know when it's done
     pipeline.set_state(gst::State::Playing).unwrap();
 

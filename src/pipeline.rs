@@ -6,6 +6,7 @@ use gstreamer::{glib, PadProbeData, PadProbeReturn, PadProbeType};
 use image::{DynamicImage, RgbImage};
 use std::io::Write;
 use std::time::Instant;
+use candle_core::Device;
 
 fn file_src_bin(input_file: &str) -> Result<gst::Element, glib::BoolError> {
     let bin = gst::Bin::new();
@@ -52,7 +53,7 @@ fn file_src_bin(input_file: &str) -> Result<gst::Element, glib::BoolError> {
 }
 
 // filesrc -> decodebin -> [candle] -> queue -> encode -> mkvmux
-pub fn build_pipeline(input_file: &str, model: YoloV8) -> Result<gst::Pipeline, glib::BoolError> {
+pub fn build_pipeline(input_file: &str, model: YoloV8, device: Device) -> Result<gst::Pipeline, glib::BoolError> {
     let pipeline = gst::Pipeline::new();
 
     // filesrc -> caps_filter -> video_convert -> [candle] -> queue -> encode -> mkvmux
@@ -79,7 +80,6 @@ pub fn build_pipeline(input_file: &str, model: YoloV8) -> Result<gst::Pipeline, 
                 let readable_vec = readable.to_vec();
 
                 // buffer size is: 1280 x 720 x 3 = 2764800
-                println!("Sweet buffer as vec has size: {}", readable_vec.len());
                 let image = RgbImage::from_vec(1280, 720, readable_vec).unwrap();
                 // debug code
                 // image.save("./output.jpg").unwrap();
@@ -93,7 +93,7 @@ pub fn build_pipeline(input_file: &str, model: YoloV8) -> Result<gst::Pipeline, 
 
             // process it using some model + draw overlays on the output image
             let start = Instant::now();
-            let processed = inference::process_frame(image, &model, 0.25, 0.45, 14).unwrap();
+            let processed = inference::process_frame(image, &model, &device, 0.25, 0.45, 14).unwrap();
             println!(
                 "Processed frame in {:.4} ms",
                 start.elapsed().as_secs_f32() * 1000.0

@@ -2,6 +2,7 @@
 //! in yolov8 example code in candle repo.
 
 use std::path::PathBuf;
+use std::time::Instant;
 
 use crate::coco_classes;
 use candle_core::{DType, Device, IndexOp, Module, Tensor};
@@ -37,7 +38,7 @@ fn model(which: Which) -> anyhow::Result<PathBuf> {
     Ok(path)
 }
 
-pub fn load_model(which: Which) -> anyhow::Result<YoloV8> {
+pub fn load_model(which: Which, device: &Device) -> anyhow::Result<YoloV8> {
     let multiples = match which {
         Which::N => Multiples::n(),
         Which::S => Multiples::s(),
@@ -46,7 +47,7 @@ pub fn load_model(which: Which) -> anyhow::Result<YoloV8> {
         Which::X => Multiples::x(),
     };
     let model = model(which)?;
-    let vb = unsafe { VarBuilder::from_mmaped_safetensors(&[model], DType::F32, &Device::Cpu)? };
+    let vb = unsafe { VarBuilder::from_mmaped_safetensors(&[model], DType::F32, &device)? };
     // let weights = unsafe { candle_core::safetensors::MmapedFile::new(model)? };
     // let weights = weights.deserialize()?;
     // let vb = VarBuilder::from_safetensors(vec![weights], DType::F32, &Device::Cpu);
@@ -149,10 +150,12 @@ fn report_detect(
 pub fn process_frame(
     frame: DynamicImage,
     model: &YoloV8,
+    device: &Device,
     conf_thresh: f32,
     nms_thresh: f32,
     legend_size: u32,
 ) -> anyhow::Result<DynamicImage> {
+    let start = Instant::now();
     // inference
     let (width, height) = {
         let w = frame.width() as usize;
@@ -167,21 +170,30 @@ pub fn process_frame(
         }
     };
     let image_t = {
+        let start = Instant::now();
         let img = frame.resize_exact(
             width as u32,
             height as u32,
-            image::imageops::FilterType::CatmullRom,
+            image::imageops::FilterType::Nearest,
+            // image::imageops::FilterType::CatmullRom,
         );
-        let data = img.to_rgb8().into_raw();
+        println!("Resize took {:?}", start.elapsed());
+        let data = img.into_rgb8().into_raw();
         Tensor::from_vec(
             data,
-            (img.height() as usize, img.width() as usize, 3),
-            &Device::Cpu,
+            (height, width, 3),
+            device,
         )?
         .permute((2, 0, 1))?
     };
     let image_t = (image_t.unsqueeze(0)?.to_dtype(DType::F32)? * (1. / 255.))?;
+    println!("Tensor prep took {:?}", start.elapsed());
+
+    let start = Instant::now();
     let predictions = model.forward(&image_t)?.squeeze(0)?;
+    println!("model forward took {:?}", start.elapsed());
+
+    let start = Instant::now();
     // process predictions and draw overlays
     let image_t = report_detect(
         &predictions,
@@ -192,6 +204,7 @@ pub fn process_frame(
         nms_thresh,
         legend_size,
     )?;
+    println!("processing detections took {:?}", start.elapsed());
     // return processed frame
     Ok(image_t)
 }
