@@ -47,7 +47,7 @@ pub fn load_model(which: Which, device: &Device) -> anyhow::Result<YoloV8> {
         Which::X => Multiples::x(),
     };
     let model = model(which)?;
-    let vb = unsafe { VarBuilder::from_mmaped_safetensors(&[model], DType::F32, &device)? };
+    let vb = unsafe { VarBuilder::from_mmaped_safetensors(&[model], DType::F32, device)? };
     // let weights = unsafe { candle_core::safetensors::MmapedFile::new(model)? };
     // let weights = weights.deserialize()?;
     // let vb = VarBuilder::from_safetensors(vec![weights], DType::F32, &Device::Cpu);
@@ -179,12 +179,7 @@ pub fn process_frame(
         );
         println!("Resize took {:?}", start.elapsed());
         let data = img.into_rgb8().into_raw();
-        Tensor::from_vec(
-            data,
-            (height, width, 3),
-            device,
-        )?
-        .permute((2, 0, 1))?
+        Tensor::from_vec(data, (height, width, 3), device)?.permute((2, 0, 1))?
     };
     let image_t = (image_t.unsqueeze(0)?.to_dtype(DType::F32)? * (1. / 255.))?;
     println!("Tensor prep took {:?}", start.elapsed());

@@ -3,8 +3,8 @@ mod inference;
 mod pipeline;
 mod yolov8;
 
-use candle_core::{CudaDevice, Device};
 use crate::inference::Which;
+use candle_core::Device;
 use clap::Parser;
 use gstreamer as gst;
 use gstreamer::prelude::*;

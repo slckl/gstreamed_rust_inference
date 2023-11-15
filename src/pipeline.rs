@@ -1,12 +1,12 @@
 use crate::inference;
 use crate::yolov8::YoloV8;
+use candle_core::Device;
 use gstreamer as gst;
 use gstreamer::prelude::*;
 use gstreamer::{glib, PadProbeData, PadProbeReturn, PadProbeType};
 use image::{DynamicImage, RgbImage};
 use std::io::Write;
 use std::time::Instant;
-use candle_core::Device;
 
 fn file_src_bin(input_file: &str) -> Result<gst::Element, glib::BoolError> {
     let bin = gst::Bin::new();
@@ -53,7 +53,11 @@ fn file_src_bin(input_file: &str) -> Result<gst::Element, glib::BoolError> {
 }
 
 // filesrc -> decodebin -> [candle] -> queue -> encode -> mkvmux
-pub fn build_pipeline(input_file: &str, model: YoloV8, device: Device) -> Result<gst::Pipeline, glib::BoolError> {
+pub fn build_pipeline(
+    input_file: &str,
+    model: YoloV8,
+    device: Device,
+) -> Result<gst::Pipeline, glib::BoolError> {
     let pipeline = gst::Pipeline::new();
 
     // filesrc -> caps_filter -> video_convert -> [candle] -> queue -> encode -> mkvmux
@@ -93,7 +97,8 @@ pub fn build_pipeline(input_file: &str, model: YoloV8, device: Device) -> Result
 
             // process it using some model + draw overlays on the output image
             let start = Instant::now();
-            let processed = inference::process_frame(image, &model, &device, 0.25, 0.45, 14).unwrap();
+            let processed =
+                inference::process_frame(image, &model, &device, 0.25, 0.45, 14).unwrap();
             println!(
                 "Processed frame in {:.4} ms",
                 start.elapsed().as_secs_f32() * 1000.0
@@ -108,7 +113,7 @@ pub fn build_pipeline(input_file: &str, model: YoloV8, device: Device) -> Result
             let mut writable = buffer_mut.map_writable().unwrap();
             let mut dst = writable.as_mut_slice();
             let processed = processed.to_rgb8().to_vec();
-            dst.write(&processed).unwrap();
+            dst.write_all(&processed).unwrap();
             println!(
                 "Wrote processed frame to buffer in {:.4} ms",
                 start.elapsed().as_secs_f32() * 1000.0
