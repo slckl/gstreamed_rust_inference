@@ -1,3 +1,4 @@
+use crate::discovery::FileInfo;
 use crate::inference;
 use crate::yolov8::YoloV8;
 use candle_core::Device;
@@ -55,6 +56,7 @@ fn file_src_bin(input_file: &str) -> Result<gst::Element, glib::BoolError> {
 // filesrc -> decodebin -> [candle] -> queue -> encode -> mkvmux
 pub fn build_pipeline(
     input_file: &str,
+    file_info: FileInfo,
     model: YoloV8,
     device: Device,
 ) -> Result<gst::Pipeline, glib::BoolError> {
@@ -83,8 +85,13 @@ pub fn build_pipeline(
                 let readable = buffer.map_readable().unwrap();
                 let readable_vec = readable.to_vec();
 
-                // buffer size is: 1280 x 720 x 3 = 2764800
-                let image = RgbImage::from_vec(1280, 720, readable_vec).unwrap();
+                // buffer size is: width x height x 3
+                let image = RgbImage::from_vec(
+                    file_info.width as u32,
+                    file_info.height as u32,
+                    readable_vec,
+                )
+                .unwrap();
                 // debug code
                 // image.save("./output.jpg").unwrap();
                 // std::process::exit(0);
