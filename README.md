@@ -1,3 +1,7 @@
-# Gstreamer x Candle example application
+# Gstreamer x Rust ML libraries for computer vision on video
 
-In this one, we use candle in a gstreamer application to perform real time inference on a video file.
+This repo contains several experimental examples of using gstreamer (via the largely excellent rust bindings) and various rust ML libraries to run computer vision inference on a video stream/file. 
+Mostly a personal playground, but maybe useful as an example for someone.
+
+
+
