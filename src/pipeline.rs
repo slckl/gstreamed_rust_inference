@@ -115,12 +115,10 @@ pub fn build_pipeline(
 
             // overwrite the buffer with our overlaid processed image
             let start = Instant::now();
-            // fixme all of this is inefficient
             let buffer_mut = buffer.get_mut().unwrap();
             let mut writable = buffer_mut.map_writable().unwrap();
             let mut dst = writable.as_mut_slice();
-            let processed = processed.to_rgb8().to_vec();
-            dst.write_all(&processed).unwrap();
+            dst.write_all(processed.to_rgb8().as_raw()).unwrap();
             println!(
                 "Wrote processed frame to buffer in {:.4} ms",
                 start.elapsed().as_secs_f32() * 1000.0
