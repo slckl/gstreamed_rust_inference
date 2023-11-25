@@ -1,4 +1,3 @@
-mod coco_classes;
 mod discovery;
 mod inference;
 mod pipeline;

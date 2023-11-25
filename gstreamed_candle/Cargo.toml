@@ -6,6 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+# workspace
+gstreamed_common = { path = "../gstreamed_common" }
+# ext
 anyhow = { version = "1.0.75", features = ["backtrace"] }
 candle-core = { version = "0.3.1", features = ["mkl", "cuda", "cudnn"] }
 candle-nn = { version = "0.3.1" }
@@ -16,5 +19,3 @@ gstreamer-pbutils = { version = "0.21.2" }
 gstreamer-video = { version = "0.21.2" }
 hf-hub = "0.3.0"
 image = { version = "0.24.7", default-features = false, features = ["jpeg", "png"] }
-imageproc = { version = "0.23.0", default-features = false }
-rusttype = { version = "0.9.3", default-features = false }

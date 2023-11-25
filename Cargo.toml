@@ -2,5 +2,6 @@
 resolver = "2"
 members = [
     "gstreamed_candle",
-    "gstreamed_ort"
+    "gstreamed_common",
+    "gstreamed_ort",
 ]
