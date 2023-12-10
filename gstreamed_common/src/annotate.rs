@@ -2,6 +2,8 @@ use crate::coco_classes;
 use candle_transformers::object_detection::{Bbox, KeyPoint};
 use image::DynamicImage;
 
+/// Draws bboxes on the given image.
+/// Returns the same image (just annotated now).
 pub fn annotate_image_with_bboxes(
     img: DynamicImage,
     w: usize,
@@ -12,9 +14,9 @@ pub fn annotate_image_with_bboxes(
     let (initial_h, initial_w) = (img.height(), img.width());
     let w_ratio = initial_w as f32 / w as f32;
     let h_ratio = initial_h as f32 / h as f32;
-    let mut img = img.to_rgb8();
     let font = Vec::from(include_bytes!("roboto-mono-stripped.ttf") as &[u8]);
     let font = rusttype::Font::try_from_vec(font);
+    let mut img = img.into_rgb8();
     for (class_index, bboxes_for_class) in bboxes.iter().enumerate() {
         for b in bboxes_for_class.iter() {
             println!("{}: {:?}", coco_classes::NAMES[class_index], b);

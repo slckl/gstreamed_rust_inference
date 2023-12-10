@@ -64,13 +64,18 @@ fn report_detect(
     nms_threshold: f32,
     legend_size: u32,
 ) -> anyhow::Result<DynamicImage> {
+    // println!("initial pred.shape: {:?}", pred.shape());
     let (pred_size, npreds) = pred.dims2()?;
     let nclasses = pred_size - 4;
     // The bounding boxes grouped by (maximum) class index.
     let mut bboxes: Vec<Vec<Bbox<Vec<KeyPoint>>>> = (0..nclasses).map(|_| vec![]).collect();
     // Extract the bounding boxes for which confidence is above the threshold.
     for index in 0..npreds {
-        let pred = Vec::<f32>::try_from(pred.i((.., index))?)?;
+        let pred = pred.i((.., index))?;
+        // println!("pred.shape: {:?}", pred.shape());
+        let pred = Vec::<f32>::try_from(pred)?;
+        // println!("pred.len(): {}", pred.len());
+        // std::io::stdout().flush().unwrap();
         let confidence = *pred[4..].iter().max_by(|x, y| x.total_cmp(y)).unwrap();
         if confidence > confidence_threshold {
             let mut class_index = 0;

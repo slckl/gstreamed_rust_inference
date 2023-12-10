@@ -1,3 +1,4 @@
 /target
 .idea
 *.mp4
+*.onnx
