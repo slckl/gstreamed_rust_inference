@@ -12,8 +12,6 @@ pub struct FileInfo {
 }
 
 fn print_tags(info: &DiscovererInfo) {
-    println!("Tags:");
-
     let tags = info.tags();
     match tags {
         Some(taglist) => {

@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-candle-transformers = "0.3.1"
+candle-transformers = "0.6.0"
 image = { version = "0.24.7" }
 imageproc = { version = "0.23.0", default-features = false }
 rusttype = { version = "0.9.3", default-features = false }

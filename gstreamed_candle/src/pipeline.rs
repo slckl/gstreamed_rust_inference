@@ -75,7 +75,7 @@ pub fn build_pipeline(
     let queue = gst::ElementFactory::make_with_name("queue", None)?;
     // perform inference between file_src_bin and queue using a probe on queue src pad
     let queue_src = queue.static_pad("src").unwrap();
-    println!("queue_src caps: {:?}", queue_src.caps());
+    // println!("queue_src caps: {:?}", queue_src.caps());
     queue_src.add_probe(PadProbeType::BUFFER, move |_pad, pad_probe_info| {
         // we're interested in the buffer
         if let Some(PadProbeData::Buffer(buffer)) = &mut pad_probe_info.data {

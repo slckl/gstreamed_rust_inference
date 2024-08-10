@@ -10,12 +10,15 @@ edition = "2021"
 gstreamed_common = { path = "../gstreamed_common" }
 # ext
 anyhow = { version = "1.0.75", features = ["backtrace"] }
-candle-core = { version = "0.3.1", features = ["mkl", "cuda", "cudnn"] }
-candle-nn = { version = "0.3.1" }
-candle-transformers = { version = "0.3.1" }
+candle-core = { version = "0.6.0", features = ["mkl", "cuda", "cudnn"] }
+candle-nn = { version = "0.6.0" }
+candle-transformers = { version = "0.6.0" }
 clap = { version = "4.4.3", features = ["derive"] }
-gstreamer = { version = "0.21.2" }
-gstreamer-pbutils = { version = "0.21.2" }
-gstreamer-video = { version = "0.21.2" }
-hf-hub = "0.3.0"
-image = { version = "0.24.7", default-features = false, features = ["jpeg", "png"] }
+gstreamer = { version = "0.23.0" }
+gstreamer-pbutils = { version = "0.23.0" }
+gstreamer-video = { version = "0.23.0" }
+hf-hub = "0.3.2"
+image = { version = "0.24.7", default-features = false, features = [
+    "jpeg",
+    "png",
+] }
