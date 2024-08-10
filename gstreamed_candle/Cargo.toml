@@ -11,7 +11,7 @@ gstreamed_common = { path = "../gstreamed_common" }
 # ext
 anyhow = { version = "1.0.75", features = ["backtrace"] }
 candle-core = { version = "0.6.0", features = ["mkl", "cuda", "cudnn"] }
-candle-nn = { version = "0.6.0" }
+candle-nn = { version = "0.6.0", features = ["cuda"] }
 candle-transformers = { version = "0.6.0" }
 clap = { version = "4.4.3", features = ["derive"] }
 gstreamer = { version = "0.23.0" }
@@ -22,3 +22,4 @@ image = { version = "0.24.7", default-features = false, features = [
     "jpeg",
     "png",
 ] }
+tracing = { version = "0.1.40" }

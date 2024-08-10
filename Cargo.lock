@@ -1122,6 +1122,7 @@ dependencies = [
  "gstreamer-video",
  "hf-hub",
  "image",
+ "tracing",
 ]
 
 [[package]]

@@ -28,8 +28,8 @@ fn main() -> anyhow::Result<()> {
     let file_info = discovery::discover(&args.input)?;
     println!("File info: {file_info:?}");
 
-    let device = Device::Cpu;
-    // let device = Device::new_cuda(0)?;
+    // let device = Device::Cpu;
+    let device = Device::new_cuda(0)?;
 
     // load models
     let which = Which::S;

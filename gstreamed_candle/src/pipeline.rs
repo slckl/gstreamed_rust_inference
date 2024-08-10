@@ -97,6 +97,7 @@ pub fn build_pipeline(
                 // std::process::exit(0);
                 DynamicImage::ImageRgb8(image)
             };
+            // TODO use log statements instead of println! for logging this stuff - I suspect this now slowing us down
             println!(
                 "Read buffer into vector in {:.4} ms",
                 start.elapsed().as_secs_f32() * 1000.0

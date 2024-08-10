@@ -65,11 +65,14 @@ fn report_detect(
     legend_size: u32,
 ) -> anyhow::Result<DynamicImage> {
     // println!("initial pred.shape: {:?}", pred.shape());
+    let start = Instant::now();
     let (pred_size, npreds) = pred.dims2()?;
     let nclasses = pred_size - 4;
     // The bounding boxes grouped by (maximum) class index.
     let mut bboxes: Vec<Vec<Bbox<Vec<KeyPoint>>>> = (0..nclasses).map(|_| vec![]).collect();
     // Extract the bounding boxes for which confidence is above the threshold.
+    // Since we compute bboxes on cpu, transfer whole prediction tensor to cpu, so it's not done inside a loop.
+    let pred = pred.to_device(&Device::Cpu)?;
     for index in 0..npreds {
         let pred = pred.i((.., index))?;
         // println!("pred.shape: {:?}", pred.shape());
@@ -97,11 +100,23 @@ fn report_detect(
             }
         }
     }
+    println!(
+        "Extracted bbox candidates in {:.4} ms",
+        start.elapsed().as_secs_f32() * 1000.0
+    );
 
+    let start = Instant::now();
     non_maximum_suppression(&mut bboxes, nms_threshold);
+    println!("NMS in {:.4} ms", start.elapsed().as_secs_f32() * 1000.0);
 
     // Annotate the original image and print boxes information.
-    Ok(annotate_image_with_bboxes(img, w, h, legend_size, &bboxes))
+    let start = Instant::now();
+    let annotated = annotate_image_with_bboxes(img, w, h, legend_size, &bboxes);
+    println!(
+        "Annotation in {:.4} ms",
+        start.elapsed().as_secs_f32() * 1000.0
+    );
+    Ok(annotated)
 }
 
 /// Run yolov8 inference, and draw detections on top of the frame.
