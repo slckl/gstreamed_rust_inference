@@ -8,7 +8,7 @@ use gstreamer::prelude::*;
 use gstreamer::{glib, PadProbeData, PadProbeReturn, PadProbeType};
 use image::{DynamicImage, RgbImage};
 use std::io::Write;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 fn file_src_bin(input_file: &str) -> Result<gst::Element, glib::BoolError> {
     let bin = gst::Bin::new();
@@ -20,6 +20,17 @@ fn file_src_bin(input_file: &str) -> Result<gst::Element, glib::BoolError> {
     // decodebin automagically determines the input format
     // and constructs and links the appropriate decoder
     let decode_bin = gst::ElementFactory::make_with_name("decodebin", None)?;
+    // decode_bin.connect("autoplug-select", false, move |values| {
+    //     let caps = &values[2];
+    //     let factory = &values[3];
+    //     dbg!(values);
+
+    //     let value = gst::glib::EnumClass::new().value(0);
+    //     // .unwrap()
+    //     // .value_from_nick("autoplug-select");
+    //     // let value = gst::glib::Value::from(0);
+    //     Some(value.into())
+    // });
 
     // finally, we use a queue so we have a late linking target
     // because decodebin's automagic needs to read the file and so is constructed "late"
@@ -66,7 +77,14 @@ pub fn build_pipeline(
     // filesrc -> caps_filter -> video_convert -> [candle] -> queue -> encode -> mkvmux
     let file_src_bin = file_src_bin(input_file)?;
     // add video_convert -> caps filter to force RGB buffers
-    let video_convert = gst::ElementFactory::make_with_name("videoconvert", None)?;
+    // NB! If we use cuda device, use nvidia magic videoconvert at least once in pipeline
+    // so we can handle laptop scenarios (with built-in graphics + cuda).
+    let video_convert = if device.is_cuda() {
+        gst::ElementFactory::make_with_name("nvvideoconvert", None)?
+    } else {
+        gst::ElementFactory::make_with_name("videoconvert", None)?
+    };
+
     let caps = gst::caps::Caps::builder(glib::gstr!("video/x-raw"))
         .field("format", "RGB")
         .build();

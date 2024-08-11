@@ -4,3 +4,5 @@
 *.onnx
 *.jpg
 candle.sh
+*.dot
+/_dot

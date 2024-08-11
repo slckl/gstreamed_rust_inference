@@ -19,7 +19,7 @@ pub fn annotate_image_with_bboxes(
     let mut img = img.into_rgb8();
     for (class_index, bboxes_for_class) in bboxes.iter().enumerate() {
         for b in bboxes_for_class.iter() {
-            log::debug!("{}: {:?}", coco_classes::NAMES[class_index], b);
+            log::trace!("{}: {:?}", coco_classes::NAMES[class_index], b);
             let xmin = (b.xmin * w_ratio) as i32;
             let ymin = (b.ymin * h_ratio) as i32;
             let dx = (b.xmax - b.xmin) * w_ratio;

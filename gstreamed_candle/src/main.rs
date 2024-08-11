@@ -39,8 +39,8 @@ fn main() -> anyhow::Result<()> {
     let file_info = discovery::discover(&args.input)?;
     log::info!("File info: {file_info:?}");
 
-    let device = Device::Cpu;
-    // let device = Device::new_cuda(0)?;
+    // let device = Device::Cpu;
+    let device = Device::new_cuda(0)?;
 
     // load models
     let which = Which::S;
@@ -50,6 +50,7 @@ fn main() -> anyhow::Result<()> {
 
     // build pipeline
     let pipeline = build_pipeline(args.input.to_str().unwrap(), file_info, model, device)?;
+
     // make it play and listen to events to know when it's done
     pipeline.set_state(gst::State::Playing).unwrap();
 
@@ -57,6 +58,7 @@ fn main() -> anyhow::Result<()> {
     for msg in bus.iter_timed(gst::ClockTime::NONE) {
         match msg.view() {
             MessageView::Error(err) => {
+                pipeline.debug_to_dot_file(gst::DebugGraphDetails::all(), "pipeline.error");
                 let name = err.src().map(|e| e.name().to_string());
                 log::error!("Error from element {name:?}: {}", err.error());
                 break;
