@@ -3,3 +3,4 @@
 *.mp4
 *.onnx
 *.jpg
+candle.sh

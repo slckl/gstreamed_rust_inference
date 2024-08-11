@@ -11,7 +11,10 @@ use clap::ValueEnum;
 use gstreamed_common::annotate::annotate_image_with_bboxes;
 use image::DynamicImage;
 
-use crate::yolov8::{Multiples, YoloV8};
+use crate::{
+    frame_times::FrameTimes,
+    yolov8::{Multiples, YoloV8},
+};
 
 // TODO move this to args
 #[derive(Clone, Copy, ValueEnum, Debug)]
@@ -63,6 +66,7 @@ fn report_detect(
     confidence_threshold: f32,
     nms_threshold: f32,
     legend_size: u32,
+    frame_times: &mut FrameTimes,
 ) -> anyhow::Result<DynamicImage> {
     // println!("initial pred.shape: {:?}", pred.shape());
     let start = Instant::now();
@@ -100,22 +104,17 @@ fn report_detect(
             }
         }
     }
-    println!(
-        "Extracted bbox candidates in {:.4} ms",
-        start.elapsed().as_secs_f32() * 1000.0
-    );
+    frame_times.bbox_extraction = start.elapsed();
 
     let start = Instant::now();
     non_maximum_suppression(&mut bboxes, nms_threshold);
-    println!("NMS in {:.4} ms", start.elapsed().as_secs_f32() * 1000.0);
+    frame_times.nms = start.elapsed();
 
     // Annotate the original image and print boxes information.
     let start = Instant::now();
     let annotated = annotate_image_with_bboxes(img, w, h, legend_size, &bboxes);
-    println!(
-        "Annotation in {:.4} ms",
-        start.elapsed().as_secs_f32() * 1000.0
-    );
+    frame_times.annotation = start.elapsed();
+
     Ok(annotated)
 }
 
@@ -129,9 +128,10 @@ pub fn process_frame(
     conf_thresh: f32,
     nms_thresh: f32,
     legend_size: u32,
+    frame_times: &mut FrameTimes,
 ) -> anyhow::Result<DynamicImage> {
+    // Resize buffer to match input size of model.
     let start = Instant::now();
-    // inference
     let (width, height) = {
         let w = frame.width() as usize;
         let h = frame.height() as usize;
@@ -144,27 +144,27 @@ pub fn process_frame(
             (640, h / 32 * 32)
         }
     };
-    let image_t = {
-        let start = Instant::now();
-        let img = frame.resize_exact(
-            width as u32,
-            height as u32,
-            // image::imageops::FilterType::Nearest,
-            image::imageops::FilterType::CatmullRom,
-        );
-        println!("Resize took {:?}", start.elapsed());
-        let data = img.into_rgb8().into_raw();
-        Tensor::from_vec(data, (height, width, 3), device)?.permute((2, 0, 1))?
-    };
-    let image_t = (image_t.unsqueeze(0)?.to_dtype(DType::F32)? * (1. / 255.))?;
-    println!("Tensor prep took {:?}", start.elapsed());
+    let img = frame.resize_exact(
+        width as u32,
+        height as u32,
+        image::imageops::FilterType::Nearest,
+        // image::imageops::FilterType::CatmullRom,
+    );
+    frame_times.buffer_resize = start.elapsed();
 
+    // Convert image buffer to tensor.
+    let start = Instant::now();
+    let data = img.into_rgb8().into_raw();
+    let image_t = Tensor::from_vec(data, (height, width, 3), device)?.permute((2, 0, 1))?;
+    let image_t = (image_t.unsqueeze(0)?.to_dtype(DType::F32)? * (1. / 255.))?;
+    frame_times.buffer_to_tensor = start.elapsed();
+
+    // Run forward pass.
     let start = Instant::now();
     let predictions = model.forward(&image_t)?.squeeze(0)?;
-    println!("model forward took {:?}", start.elapsed());
+    frame_times.forward_pass = start.elapsed();
 
-    let start = Instant::now();
-    // process predictions and draw overlays
+    // Process predictions and draw overlays.
     let image_t = report_detect(
         &predictions,
         frame,
@@ -173,8 +173,9 @@ pub fn process_frame(
         conf_thresh,
         nms_thresh,
         legend_size,
+        frame_times,
     )?;
-    println!("processing detections took {:?}", start.elapsed());
-    // return processed frame
+
+    // Return processed image tensor.
     Ok(image_t)
 }

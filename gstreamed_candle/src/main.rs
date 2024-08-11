@@ -1,4 +1,5 @@
 mod discovery;
+mod frame_times;
 mod inference;
 mod pipeline;
 mod yolov8;
@@ -10,6 +11,7 @@ use gstreamer as gst;
 use gstreamer::prelude::*;
 use gstreamer::MessageView;
 use std::path::PathBuf;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::pipeline::build_pipeline;
 
@@ -22,14 +24,23 @@ pub struct Args {
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
+    // Initialize logging.
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "debug".into()),
+        )
+        .with(tracing_subscriber::fmt::layer())
+        .init();
+
     gst::init()?;
 
     // first find out resolution of input file
     let file_info = discovery::discover(&args.input)?;
-    println!("File info: {file_info:?}");
+    log::info!("File info: {file_info:?}");
 
-    // let device = Device::Cpu;
-    let device = Device::new_cuda(0)?;
+    let device = Device::Cpu;
+    // let device = Device::new_cuda(0)?;
 
     // load models
     let which = Which::S;
@@ -47,11 +58,11 @@ fn main() -> anyhow::Result<()> {
         match msg.view() {
             MessageView::Error(err) => {
                 let name = err.src().map(|e| e.name().to_string());
-                eprintln!("Error from element {name:?}: {}", err.error());
+                log::error!("Error from element {name:?}: {}", err.error());
                 break;
             }
             MessageView::Eos(..) => {
-                println!("Pipeline reached end of stream.");
+                log::error!("Pipeline reached end of stream.");
                 break;
             }
             _ => (),
