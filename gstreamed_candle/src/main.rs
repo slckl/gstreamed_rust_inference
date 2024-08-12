@@ -19,6 +19,8 @@ use crate::pipeline::build_pipeline;
 pub struct Args {
     /// Path to a video file we want to process.
     input: PathBuf,
+    // TODO cuda flag
+    // TODO dtype switch
 }
 
 fn main() -> anyhow::Result<()> {

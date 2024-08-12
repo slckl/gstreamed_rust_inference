@@ -76,7 +76,7 @@ fn report_detect(
     let mut bboxes: Vec<Vec<Bbox<Vec<KeyPoint>>>> = (0..nclasses).map(|_| vec![]).collect();
     // Extract the bounding boxes for which confidence is above the threshold.
     // Since we compute bboxes on cpu, transfer whole prediction tensor to cpu, so it's not done inside a loop.
-    let pred = pred.to_device(&Device::Cpu)?;
+    let pred = pred.to_device(&Device::Cpu)?.to_dtype(DType::F32)?;
     for index in 0..npreds {
         let pred = pred.i((.., index))?;
         // println!("pred.shape: {:?}", pred.shape());
