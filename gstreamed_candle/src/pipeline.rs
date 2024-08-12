@@ -79,12 +79,11 @@ pub fn build_pipeline(
     // add video_convert -> caps filter to force RGB buffers
     // NB! If we use cuda device, use nvidia magic videoconvert at least once in pipeline
     // so we can handle laptop scenarios (with built-in graphics + cuda).
-    let mut converter_factory = gst::ElementFactory::find("videoconvert").unwrap();
-    if device.is_cuda() {
-        if let Some(factory) = gst::ElementFactory::find("nvvideoconvert") {
-            converter_factory = factory;
-        }
-    }
+    let converter_factory = if let Some(factory) = gst::ElementFactory::find("nvvideoconvert") {
+        factory
+    } else {
+        gst::ElementFactory::find("videoconvert").unwrap()
+    };
     let video_convert = converter_factory.create().build()?;
 
     let caps = gst::caps::Caps::builder(glib::gstr!("video/x-raw"))

@@ -19,7 +19,8 @@ use crate::pipeline::build_pipeline;
 pub struct Args {
     /// Path to a video file we want to process.
     input: PathBuf,
-    // TODO cuda flag
+    #[arg(long, action, default_value = "false")]
+    cuda: bool,
     // TODO dtype switch
 }
 
@@ -37,23 +38,26 @@ fn main() -> anyhow::Result<()> {
 
     gst::init()?;
 
-    // first find out resolution of input file
+    // First, find out resolution of input file.
     let file_info = discovery::discover(&args.input)?;
     log::info!("File info: {file_info:?}");
 
-    // let device = Device::Cpu;
-    let device = Device::new_cuda(0)?;
+    let device = if args.cuda {
+        Device::new_cuda(0)?
+    } else {
+        Device::Cpu
+    };
 
-    // load models
+    // Load models using hf-hub.
     let which = Which::S;
     let model = inference::load_model(which, &device)?;
 
     // TODO pipe gst logs to some rust log handler
 
-    // build pipeline
+    // Build gst pipeline, which performs inference using the loaded model.
     let pipeline = build_pipeline(args.input.to_str().unwrap(), file_info, model, device)?;
 
-    // make it play and listen to events to know when it's done
+    // Make it play and listen to events to know when it's done.
     pipeline.set_state(gst::State::Playing).unwrap();
 
     let bus = pipeline.bus().unwrap();
