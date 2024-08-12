@@ -947,7 +947,11 @@ dependencies = [
 name = "gstreamed_common"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "candle-transformers",
+ "gstreamer",
+ "gstreamer-pbutils",
+ "gstreamer-video",
  "image",
  "imageproc",
  "log",

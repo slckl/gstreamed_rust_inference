@@ -1,4 +1,3 @@
-mod discovery;
 mod frame_times;
 mod inference;
 mod pipeline;
@@ -7,6 +6,7 @@ mod yolov8;
 use crate::inference::Which;
 use candle_core::Device;
 use clap::Parser;
+use gstreamed_common::discovery;
 use gstreamer as gst;
 use gstreamer::prelude::*;
 use gstreamer::MessageView;

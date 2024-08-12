@@ -1,8 +1,8 @@
-use crate::discovery::FileInfo;
 use crate::frame_times::FrameTimes;
 use crate::inference;
 use crate::yolov8::YoloV8;
 use candle_core::Device;
+use gstreamed_common::discovery::FileInfo;
 use gstreamer as gst;
 use gstreamer::prelude::*;
 use gstreamer::{glib, PadProbeData, PadProbeReturn, PadProbeType};
@@ -20,17 +20,6 @@ fn file_src_bin(input_file: &str) -> Result<gst::Element, glib::BoolError> {
     // decodebin automagically determines the input format
     // and constructs and links the appropriate decoder
     let decode_bin = gst::ElementFactory::make_with_name("decodebin", None)?;
-    // decode_bin.connect("autoplug-select", false, move |values| {
-    //     let caps = &values[2];
-    //     let factory = &values[3];
-    //     dbg!(values);
-
-    //     let value = gst::glib::EnumClass::new().value(0);
-    //     // .unwrap()
-    //     // .value_from_nick("autoplug-select");
-    //     // let value = gst::glib::Value::from(0);
-    //     Some(value.into())
-    // });
 
     // finally, we use a queue so we have a late linking target
     // because decodebin's automagic needs to read the file and so is constructed "late"
