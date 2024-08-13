@@ -1,20 +1,16 @@
-mod buffer_processor;
 mod inference;
-mod pipeline;
 mod yolov8;
 
 use crate::inference::Which;
-use buffer_processor::CandleBufferProcessor;
 use candle_core::Device;
 use clap::Parser;
 use gstreamed_common::discovery;
+use gstreamed_common::pipeline::build_pipeline;
 use gstreamer as gst;
 use gstreamer::prelude::*;
 use gstreamer::MessageView;
 use std::path::PathBuf;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-
-use crate::pipeline::build_pipeline;
 
 #[derive(Debug, Parser)]
 pub struct Args {
@@ -52,17 +48,11 @@ fn main() -> anyhow::Result<()> {
     // Load models using hf-hub.
     let which = Which::S;
     let model = inference::load_model(which, &device)?;
-    let processor = CandleBufferProcessor {
-        file_info,
-        model,
-        device,
-    };
-
     // TODO pipe gst logs to some rust log handler
 
     // Build gst pipeline, which performs inference using the loaded model.
     let pipeline = build_pipeline(args.input.to_str().unwrap(), move |buf| {
-        processor.process(buf);
+        inference::process_buffer(&file_info, &model, &device, buf);
     })?;
 
     // Make it play and listen to events to know when it's done.
