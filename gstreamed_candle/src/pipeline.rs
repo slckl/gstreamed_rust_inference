@@ -1,14 +1,8 @@
-use crate::frame_times::FrameTimes;
-use crate::inference;
-use crate::yolov8::YoloV8;
-use candle_core::Device;
-use gstreamed_common::discovery::FileInfo;
+use std::sync::Arc;
+
 use gstreamer as gst;
 use gstreamer::prelude::*;
 use gstreamer::{glib, PadProbeData, PadProbeReturn, PadProbeType};
-use image::{DynamicImage, RgbImage};
-use std::io::Write;
-use std::time::Instant;
 
 fn file_src_bin(input_file: &str) -> Result<gst::Element, glib::BoolError> {
     let bin = gst::Bin::new();
@@ -54,12 +48,14 @@ fn file_src_bin(input_file: &str) -> Result<gst::Element, glib::BoolError> {
     Ok(bin.upcast())
 }
 
+pub trait BufferProcessor: Send + Sync {
+    fn process(&self, buffer: &mut gst::Buffer);
+}
+
 // filesrc -> decodebin -> [candle] -> queue -> encode -> mkvmux
 pub fn build_pipeline(
     input_file: &str,
-    file_info: FileInfo,
-    model: YoloV8,
-    device: Device,
+    buffer_processor: &'static impl BufferProcessor,
 ) -> Result<gst::Pipeline, glib::BoolError> {
     let pipeline = gst::Pipeline::new();
 
@@ -88,45 +84,7 @@ pub fn build_pipeline(
     queue_src.add_probe(PadProbeType::BUFFER, move |_pad, pad_probe_info| {
         // we're interested in the buffer
         if let Some(PadProbeData::Buffer(buffer)) = &mut pad_probe_info.data {
-            let mut frame_times = FrameTimes::default();
-
-            let start = Instant::now();
-            // read buffer into an image
-            let image = {
-                let readable = buffer.map_readable().unwrap();
-                let readable_vec = readable.to_vec();
-
-                // buffer size is: width x height x 3
-                let image = RgbImage::from_vec(
-                    file_info.width as u32,
-                    file_info.height as u32,
-                    readable_vec,
-                )
-                .unwrap();
-                // debug code
-                // image.save("./output.jpg").unwrap();
-                // std::process::exit(0);
-                DynamicImage::ImageRgb8(image)
-            };
-            frame_times.frame_to_buffer = start.elapsed();
-
-            // process it using some model + draw overlays on the output image
-            let processed =
-                inference::process_frame(image, &model, &device, 0.25, 0.45, 14, &mut frame_times)
-                    .unwrap();
-
-            // processed.save("./output.jpg").unwrap();
-            // std::process::exit(0);
-
-            // overwrite the buffer with our overlaid processed image
-            let start = Instant::now();
-            let buffer_mut = buffer.get_mut().unwrap();
-            let mut writable = buffer_mut.map_writable().unwrap();
-            let mut dst = writable.as_mut_slice();
-            dst.write_all(processed.to_rgb8().as_raw()).unwrap();
-            frame_times.buffer_to_frame = start.elapsed();
-
-            log::debug!("{frame_times:?}");
+            buffer_processor.process(buffer);
         }
 
         PadProbeReturn::Ok

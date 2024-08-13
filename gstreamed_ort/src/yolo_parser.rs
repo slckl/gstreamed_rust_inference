@@ -1,6 +1,6 @@
 use candle_transformers::object_detection::{non_maximum_suppression, Bbox, KeyPoint};
 use gstreamed_common::annotate::annotate_image_with_bboxes;
-use image::{DynamicImage, RgbImage};
+use image::DynamicImage;
 use ndarray::{s, ArrayView, IxDyn};
 
 fn parse_predictions(

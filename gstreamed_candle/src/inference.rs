@@ -8,13 +8,10 @@ use candle_core::{DType, Device, IndexOp, Module, Tensor};
 use candle_nn::VarBuilder;
 use candle_transformers::object_detection::{non_maximum_suppression, Bbox, KeyPoint};
 use clap::ValueEnum;
-use gstreamed_common::annotate::annotate_image_with_bboxes;
+use gstreamed_common::{annotate::annotate_image_with_bboxes, frame_times::FrameTimes};
 use image::DynamicImage;
 
-use crate::{
-    frame_times::FrameTimes,
-    yolov8::{Multiples, YoloV8},
-};
+use crate::yolov8::{Multiples, YoloV8};
 
 // TODO move this to args
 #[derive(Clone, Copy, ValueEnum, Debug)]
