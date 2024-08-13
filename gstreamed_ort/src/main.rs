@@ -6,6 +6,7 @@ use image::{DynamicImage, GenericImageView, RgbImage};
 use ndarray::{Array, Array4, CowArray, Dimension};
 use ort::tensor::OrtOwnedTensor;
 use ort::{ExecutionProvider, GraphOptimizationLevel, OrtResult, SessionBuilder, Value};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 fn image_from_ndarray<D: Dimension>(
     array: Array<f32, D>,
@@ -20,6 +21,15 @@ fn image_from_ndarray<D: Dimension>(
 }
 
 fn main() -> anyhow::Result<()> {
+    // Initialize logging.
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "debug".into()),
+        )
+        .with(tracing_subscriber::fmt::layer())
+        .init();
+
     let ort_env = ort::Environment::builder()
         .with_name("yolov8")
         .with_execution_providers([ExecutionProvider::CPU(Default::default())])
@@ -27,27 +37,27 @@ fn main() -> anyhow::Result<()> {
         .into_arc();
 
     let session = SessionBuilder::new(&ort_env)?
-        .with_optimization_level(GraphOptimizationLevel::Level1)?
-        .with_intra_threads(1)?
+        // .with_optimization_level(GraphOptimizationLevel::Level1)?
+        // .with_intra_threads(1)?
         .with_model_from_file("_models/yolov8s.640x360.cpu.onnx")?;
-    println!("session: {session:?}");
+    log::debug!("session: {session:?}");
 
     // read image
     let image = image::open("sample.jpg").unwrap();
 
-    println!("image.dimensions: {:?}", image.dimensions());
-    println!("image.color: {:?}", image.color());
+    log::debug!("image.dimensions: {:?}", image.dimensions());
+    log::debug!("image.color: {:?}", image.color());
     let image = image.into_rgb8();
 
     // resize image to fit what we got
     // our model is 640 x 384
-    let scaled_image = resize(&image, 640, 384, FilterType::CatmullRom);
+    let scaled_image = resize(&image, 640, 384, FilterType::Triangle);
 
+    // TODO preprocess sketchy still...
     // copy image into ndarray
-    // TODO do we need to normalize to 0..1, when converting u8 to f32?
-    // and permute axes to match inputs of our model
     let image_array = Array4::from_shape_vec(
-        (1, 640, 384, 3),
+        // (1, 640, 384, 3),
+        (1, 3, 384, 640),
         scaled_image
             .into_raw()
             .into_iter()
@@ -55,15 +65,19 @@ fn main() -> anyhow::Result<()> {
             .map(|v| (v as f32) * (1.0 / 255.0))
             .collect(),
     )
-    .unwrap()
-    .permuted_axes([0, 3, 2, 1]);
+    .unwrap();
+    // dbg!(&image_array);
+    // if true {
+    //     std::process::exit(0);
+    // }
 
     // check that image still makes sense
     let test_image = image_from_ndarray(image_array.clone(), 640, 384).unwrap();
     test_image.save("test.jpg").unwrap();
 
     let image_array = CowArray::from(image_array).into_dyn();
-    println!("image_array.shape: {:?}", image_array.shape());
+    log::debug!("image_array.shape: {:?}", image_array.shape());
+    log::debug!("image_array.strides: {:?}", image_array.strides());
     // read into ndarray
     // let input: &CowArray = wrapped.into();
     let input = vec![Value::from_array(session.allocator(), &image_array)?];
@@ -73,7 +87,7 @@ fn main() -> anyhow::Result<()> {
     let outputs: OrtOwnedTensor<f32, _> = outputs[0].try_extract()?;
     let output_view = outputs.view();
     // output shape is 1 x 84 x 5040
-    println!("got outputs: {outputs:?}");
+    log::debug!("got outputs: {outputs:?}");
     // parse and annotate outputs
     let img = report_detect(
         output_view.view(),

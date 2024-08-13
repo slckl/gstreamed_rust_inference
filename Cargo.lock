@@ -916,12 +916,19 @@ name = "gstreamed_ort"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "clap",
  "gstreamed_common",
+ "gstreamer",
+ "gstreamer-pbutils",
+ "gstreamer-video",
  "image",
  "imageproc",
+ "log",
  "ndarray",
  "ort",
  "rusttype",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]

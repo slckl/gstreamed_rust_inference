@@ -15,7 +15,7 @@ fn parse_predictions(
     // pred.shape: [84]
     // pred.len(): 84
     let shape = preds.shape();
-    println!("preds.shape: {shape:?}");
+    log::debug!("preds.shape: {shape:?}");
     // TODO study wtf they doing in ultralytics yolo rust example
     let (pred_size, npreds) = (shape[1], shape[2]);
     let nclasses = pred_size - 4;
@@ -24,9 +24,9 @@ fn parse_predictions(
     // Extract the bounding boxes for which confidence is above the threshold.
     for index in 0..npreds {
         let pred_view = preds.slice(s![.., .., index]);
-        println!("pred_view.shape: {:?}", pred_view.shape());
+        // log::debug!("pred_view.shape: {:?}", pred_view.shape());
         let pred: Vec<f32> = pred_view.iter().copied().collect();
-        // println!("pred: {pred:?}");
+        // log::debug!("pred: {pred:?}");
         // std::process::exit(0);
         let confidence = *pred[4..].iter().max_by(|x, y| x.total_cmp(y)).unwrap();
         if confidence > conf_threshold {
@@ -46,8 +46,8 @@ fn parse_predictions(
                     data: vec![],
                 };
                 if bbox.xmin < 0.0 || bbox.ymin < 0.0 || bbox.xmax < 0.0 || bbox.ymax < 0.0 {
-                    eprintln!("bbox with negative coords: {bbox:?}");
-                    eprintln!("from preds: {pred:?}");
+                    log::debug!("bbox with negative coords: {bbox:?}");
+                    log::debug!("from preds: {pred:?}");
                 } else {
                     bboxes[class_index].push(bbox)
                 }
