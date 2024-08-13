@@ -57,16 +57,13 @@ fn main() -> anyhow::Result<()> {
         model,
         device,
     };
-    // Gst wants 'static lifetime for probe closures...
-    // So we "leak" the processor to obtain a 'static ref to it.
-    // Note that this only works because processor is scoped to top level/main function.
-    let proc_ref: &'static CandleBufferProcessor = unsafe { std::mem::transmute(&processor) };
-    std::mem::forget(processor);
 
     // TODO pipe gst logs to some rust log handler
 
     // Build gst pipeline, which performs inference using the loaded model.
-    let pipeline = build_pipeline(args.input.to_str().unwrap(), proc_ref)?;
+    let pipeline = build_pipeline(args.input.to_str().unwrap(), move |buf| {
+        processor.process(buf);
+    })?;
 
     // Make it play and listen to events to know when it's done.
     pipeline.set_state(gst::State::Playing).unwrap();

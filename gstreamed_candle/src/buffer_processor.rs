@@ -6,7 +6,7 @@ use gstreamed_common::{discovery::FileInfo, frame_times::FrameTimes};
 use gstreamer as gst;
 use image::{DynamicImage, RgbImage};
 
-use crate::{inference, pipeline::BufferProcessor, yolov8::YoloV8};
+use crate::{inference, yolov8::YoloV8};
 
 pub struct CandleBufferProcessor {
     pub file_info: FileInfo,
@@ -14,8 +14,8 @@ pub struct CandleBufferProcessor {
     pub device: Device,
 }
 
-impl BufferProcessor for CandleBufferProcessor {
-    fn process(&self, buffer: &mut gst::Buffer) {
+impl CandleBufferProcessor {
+    pub fn process(&self, buffer: &mut gst::Buffer) {
         let file_info = &self.file_info;
         let model = &self.model;
         let device = &self.device;
@@ -44,7 +44,7 @@ impl BufferProcessor for CandleBufferProcessor {
 
         // process it using some model + draw overlays on the output image
         let processed =
-            inference::process_frame(image, &model, &device, 0.25, 0.45, 14, &mut frame_times)
+            inference::process_frame(image, model, device, 0.25, 0.45, 14, &mut frame_times)
                 .unwrap();
 
         // processed.save("./output.jpg").unwrap();

@@ -1,7 +1,5 @@
-use std::sync::Arc;
-
-use gstreamer as gst;
 use gstreamer::prelude::*;
+use gstreamer::{self as gst, Buffer};
 use gstreamer::{glib, PadProbeData, PadProbeReturn, PadProbeType};
 
 fn file_src_bin(input_file: &str) -> Result<gst::Element, glib::BoolError> {
@@ -48,14 +46,10 @@ fn file_src_bin(input_file: &str) -> Result<gst::Element, glib::BoolError> {
     Ok(bin.upcast())
 }
 
-pub trait BufferProcessor: Send + Sync {
-    fn process(&self, buffer: &mut gst::Buffer);
-}
-
 // filesrc -> decodebin -> [candle] -> queue -> encode -> mkvmux
 pub fn build_pipeline(
     input_file: &str,
-    buffer_processor: &'static impl BufferProcessor,
+    buffer_processor: impl Fn(&mut Buffer) + Send + Sync + 'static,
 ) -> Result<gst::Pipeline, glib::BoolError> {
     let pipeline = gst::Pipeline::new();
 
@@ -84,7 +78,7 @@ pub fn build_pipeline(
     queue_src.add_probe(PadProbeType::BUFFER, move |_pad, pad_probe_info| {
         // we're interested in the buffer
         if let Some(PadProbeData::Buffer(buffer)) = &mut pad_probe_info.data {
-            buffer_processor.process(buffer);
+            buffer_processor(buffer);
         }
 
         PadProbeReturn::Ok
