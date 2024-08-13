@@ -12,7 +12,7 @@ gstreamed_common = { path = "../gstreamed_common" }
 anyhow = { version = "1.0.75", features = ["backtrace"] }
 candle-core = { version = "0.6.0", features = ["cuda", "cudnn"] }
 candle-nn = { version = "0.6.0", features = ["cuda"] }
-candle-transformers = { version = "0.6.0" }
+# candle-transformers = { version = "0.6.0" }
 clap = { version = "4.4.3", features = ["derive"] }
 gstreamer = { version = "0.23.0" }
 gstreamer-pbutils = { version = "0.23.0" }

@@ -1,5 +1,7 @@
-use crate::coco_classes;
-use candle_transformers::object_detection::{Bbox, KeyPoint};
+use crate::{
+    bbox::{Bbox, KeyPoint},
+    coco_classes,
+};
 use image::DynamicImage;
 
 /// Draws bboxes on the given image.

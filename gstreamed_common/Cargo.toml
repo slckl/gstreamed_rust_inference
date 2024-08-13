@@ -7,7 +7,6 @@ edition = "2021"
 
 [dependencies]
 anyhow = { version = "1.0.75", features = ["backtrace"] }
-candle-transformers = "0.6.0"
 gstreamer = { version = "0.23.0" }
 gstreamer-pbutils = { version = "0.23.0" }
 gstreamer-video = { version = "0.23.0" }

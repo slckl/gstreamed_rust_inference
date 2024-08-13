@@ -1,4 +1,5 @@
 //! Lifted wholesale from candle examples.
+
 pub const NAMES: [&str; 80] = [
     "person",
     "bicycle",

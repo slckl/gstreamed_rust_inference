@@ -1,5 +1,7 @@
-use candle_transformers::object_detection::{non_maximum_suppression, Bbox, KeyPoint};
-use gstreamed_common::annotate::annotate_image_with_bboxes;
+use gstreamed_common::{
+    annotate::annotate_image_with_bboxes,
+    bbox::{non_maximum_suppression, Bbox, KeyPoint},
+};
 use image::DynamicImage;
 use ndarray::{s, ArrayView, IxDyn};
 

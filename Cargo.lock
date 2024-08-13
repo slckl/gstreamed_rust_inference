@@ -153,21 +153,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bit-set"
-version = "0.5.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0700ddab506f33b20a03b13996eccd309a48e5ff77d0d95926aa0210fb4e95f1"
-dependencies = [
- "bit-vec",
-]
-
-[[package]]
-name = "bit-vec"
-version = "0.6.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "349f9b6a179ed607305526ca489b34ad0a41aed5f7980fa90eb03160b69598fb"
-
-[[package]]
 name = "bit_field"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -256,25 +241,6 @@ dependencies = [
  "safetensors",
  "serde",
  "thiserror",
-]
-
-[[package]]
-name = "candle-transformers"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4f0d4eb6a0d9279d5829b06b2bf3caa117904eefd6dcf879d16e687c4a84034c"
-dependencies = [
- "byteorder",
- "candle-core",
- "candle-nn",
- "fancy-regex",
- "num-traits",
- "rand 0.8.5",
- "rayon",
- "serde",
- "serde_json",
- "serde_plain",
- "tracing",
 ]
 
 [[package]]
@@ -552,17 +518,6 @@ dependencies = [
  "rayon-core",
  "smallvec",
  "zune-inflate",
-]
-
-[[package]]
-name = "fancy-regex"
-version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "531e46835a22af56d1e3b66f04844bed63158bc094a628bec1d321d9b4c44bf2"
-dependencies = [
- "bit-set",
- "regex-automata 0.4.7",
- "regex-syntax 0.8.4",
 ]
 
 [[package]]
@@ -930,7 +885,6 @@ dependencies = [
  "anyhow",
  "candle-core",
  "candle-nn",
- "candle-transformers",
  "clap",
  "gstreamed_common",
  "gstreamer",
@@ -948,7 +902,6 @@ name = "gstreamed_common"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "candle-transformers",
  "gstreamer",
  "gstreamer-pbutils",
  "gstreamer-video",
@@ -963,7 +916,6 @@ name = "gstreamed_ort"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "candle-transformers",
  "gstreamed_common",
  "image",
  "imageproc",
@@ -2176,15 +2128,6 @@ dependencies = [
  "itoa",
  "memchr",
  "ryu",
- "serde",
-]
-
-[[package]]
-name = "serde_plain"
-version = "1.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9ce1fc6db65a611022b23a0dec6975d63fb80a302cb3388835ff02c097258d50"
-dependencies = [
  "serde",
 ]
 
