@@ -8,7 +8,7 @@ use std::time::Instant;
 use candle_core::{DType, Device, IndexOp, Module, Tensor};
 use candle_nn::VarBuilder;
 use clap::ValueEnum;
-use gstreamed_common::bbox::{non_maximum_suppression, Bbox, KeyPoint};
+use gstreamed_common::bbox::{non_maximum_suppression, Bbox};
 use gstreamed_common::discovery::FileInfo;
 use gstreamed_common::{annotate::annotate_image_with_bboxes, frame_times::FrameTimes};
 use gstreamer as gst;
