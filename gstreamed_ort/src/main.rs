@@ -34,8 +34,8 @@ fn main() -> anyhow::Result<()> {
     let ort_env = ort::Environment::builder()
         .with_name("yolov8")
         // .with_execution_providers([ExecutionProvider::CPU(Default::default())])
-        // .with_execution_providers([cuda_ep])
-        .with_execution_providers([trt_ep])
+        .with_execution_providers([cuda_ep])
+        // .with_execution_providers([trt_ep])
         .build()?
         .into_arc();
 
@@ -48,11 +48,12 @@ fn main() -> anyhow::Result<()> {
     // Read image.
     let og_image = image::open("sample.jpg")?;
 
+    // for _ in 0..10 {
     // Process image.
-    let img = inference::process_image(&session, og_image)?;
-
+    let img = inference::process_image(&session, og_image.clone())?;
     // Save output.
     img.save("output.jpg")?;
+    // }
 
     Ok(())
 }
