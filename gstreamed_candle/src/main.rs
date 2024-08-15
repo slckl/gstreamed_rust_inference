@@ -5,6 +5,7 @@ use crate::inference::Which;
 use candle_core::Device;
 use clap::Parser;
 use gstreamed_common::discovery;
+use gstreamed_common::img_dimensions::ImgDimensions;
 use gstreamed_common::pipeline::build_pipeline;
 use gstreamer as gst;
 use gstreamer::prelude::*;
@@ -38,6 +39,7 @@ fn main() -> anyhow::Result<()> {
     // First, find out resolution of input file.
     let file_info = discovery::discover(&args.input)?;
     log::info!("File info: {file_info:?}");
+    let frame_dims = ImgDimensions::new(file_info.width as f32, file_info.height as f32);
 
     let device = if args.cuda {
         Device::new_cuda(0)?
@@ -52,7 +54,7 @@ fn main() -> anyhow::Result<()> {
 
     // Build gst pipeline, which performs inference using the loaded model.
     let pipeline = build_pipeline(args.input.to_str().unwrap(), move |buf| {
-        inference::process_buffer(&file_info, &model, &device, buf);
+        inference::process_buffer(frame_dims, &model, &device, buf);
     })?;
 
     // Make it play and listen to events to know when it's done.

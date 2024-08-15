@@ -4,12 +4,10 @@ use gstreamed_common::{
     annotate::annotate_image_with_bboxes,
     bbox::{non_maximum_suppression, Bbox},
     coco_classes,
-    frame_times::FrameTimes,
+    frame_times::FrameTimes, img_dimensions::ImgDimensions,
 };
 use image::DynamicImage;
 use ndarray::{s, ArrayView, Axis, Dim, IxDyn};
-
-use crate::ImgDimensions;
 
 /// Parse yolov8 predictions via `ort`.
 pub fn parse_predictions(

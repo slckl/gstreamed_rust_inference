@@ -10,6 +10,7 @@ use candle_nn::VarBuilder;
 use clap::ValueEnum;
 use gstreamed_common::bbox::{non_maximum_suppression, Bbox};
 use gstreamed_common::discovery::FileInfo;
+use gstreamed_common::img_dimensions::ImgDimensions;
 use gstreamed_common::{annotate::annotate_image_with_bboxes, frame_times::FrameTimes};
 use gstreamer as gst;
 use image::{DynamicImage, RgbImage};
@@ -61,8 +62,7 @@ pub fn load_model(which: Which, device: &Device) -> anyhow::Result<YoloV8> {
 fn report_detect(
     pred: &Tensor,
     og_img: DynamicImage,
-    scaled_width: usize,
-    scaled_height: usize,
+    scaled_dims: ImgDimensions,
     confidence_threshold: f32,
     nms_threshold: f32,
     legend_size: u32,
@@ -112,7 +112,13 @@ fn report_detect(
 
     // Annotate the original image and print boxes information.
     let start = Instant::now();
-    let annotated = annotate_image_with_bboxes(og_img, scaled_width, scaled_height, legend_size, &bboxes);
+    let annotated = annotate_image_with_bboxes(
+        og_img,
+        scaled_dims.width as usize,
+        scaled_dims.height as usize,
+        legend_size,
+        &bboxes,
+    );
     frame_times.annotation = start.elapsed();
 
     Ok(annotated)
@@ -145,9 +151,6 @@ pub fn process_frame(
         }
     };
     log::debug!("scaled w: {scaled_width}, scaled h: {scaled_height}");
-    if true {
-        std::process::exit(0);
-    }
     let scaled_img = frame.resize_exact(
         scaled_width as u32,
         scaled_height as u32,
@@ -159,7 +162,8 @@ pub fn process_frame(
     // Convert image buffer to tensor.
     let start = Instant::now();
     let data = scaled_img.into_rgb8().into_raw();
-    let image_t = Tensor::from_vec(data, (scaled_height, scaled_width, 3), device)?.permute((2, 0, 1))?;
+    let image_t =
+        Tensor::from_vec(data, (scaled_height, scaled_width, 3), device)?.permute((2, 0, 1))?;
     let image_t = (image_t.unsqueeze(0)?.to_dtype(DType::F32)? * (1. / 255.))?;
     frame_times.buffer_to_tensor = start.elapsed();
 
@@ -172,8 +176,7 @@ pub fn process_frame(
     let image_t = report_detect(
         &predictions,
         frame,
-        scaled_width,
-        scaled_height,
+        ImgDimensions::new(scaled_width as f32, scaled_height as f32),
         conf_thresh,
         nms_thresh,
         legend_size,
@@ -185,8 +188,7 @@ pub fn process_frame(
 }
 
 pub fn process_buffer(
-    // TODO replace with ImgDimensions
-    file_info: &FileInfo,
+    frame_dims: ImgDimensions,
     model: &YoloV8,
     device: &Device,
     buffer: &mut gst::Buffer,
@@ -205,8 +207,8 @@ pub fn process_buffer(
 
         // buffer size is: width x height x 3
         let image = RgbImage::from_vec(
-            file_info.width as u32,
-            file_info.height as u32,
+            frame_dims.width as u32,
+            frame_dims.height as u32,
             readable_vec,
         )
         .unwrap();
