@@ -14,7 +14,7 @@ pub fn annotate_image_with_bboxes(
     let w_ratio = initial_w as f32 / scaled_width as f32;
     let h_ratio = initial_h as f32 / scaled_height as f32;
     let font = Vec::from(include_bytes!("roboto-mono-stripped.ttf") as &[u8]);
-    let font = rusttype::Font::try_from_vec(font);
+    let font = ab_glyph::FontRef::try_from_slice(&font);
     let mut img = og_img.into_rgb8();
     for (class_index, bboxes_for_class) in bboxes.iter().enumerate() {
         for b in bboxes_for_class.iter() {
@@ -31,7 +31,7 @@ pub fn annotate_image_with_bboxes(
                 );
             }
             if legend_size > 0 {
-                if let Some(font) = font.as_ref() {
+                if let Ok(font) = font.as_ref() {
                     imageproc::drawing::draw_filled_rect_mut(
                         &mut img,
                         imageproc::rect::Rect::at(xmin, ymin).of_size(dx as u32, legend_size),
@@ -47,7 +47,7 @@ pub fn annotate_image_with_bboxes(
                         image::Rgb([255, 255, 255]),
                         xmin,
                         ymin,
-                        rusttype::Scale::uniform(legend_size as f32 - 1.),
+                        ab_glyph::PxScale::from(legend_size as f32 - 1.),
                         font,
                         &legend,
                     )

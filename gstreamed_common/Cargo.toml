@@ -6,11 +6,11 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+ab_glyph = { version = "0.2.28" }
 anyhow = { version = "1.0.75", features = ["backtrace"] }
 gstreamer = { version = "0.23.0" }
 gstreamer-pbutils = { version = "0.23.0" }
 gstreamer-video = { version = "0.23.0" }
-image = { version = "0.24.7" }
-imageproc = { version = "0.23.0", default-features = false }
+image = { version = "0.25.2" }
+imageproc = { version = "0.25.0", default-features = false }
 log = "0.4.22"
-rusttype = { version = "0.9.3", default-features = false }

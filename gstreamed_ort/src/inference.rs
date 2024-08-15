@@ -8,7 +8,7 @@ use image::{
 use ndarray::{Array, Array4, ArrayView, CowArray, Dimension, IxDyn};
 use ort::{tensor::OrtOwnedTensor, Value};
 
-use crate::{yolo_parser::report_detect};
+use crate::yolo_parser::report_detect;
 
 // FIXME this function does not quite work right, I think...
 /// Creates a new image from the given [Array].

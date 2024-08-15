@@ -17,7 +17,7 @@ gstreamer = { version = "0.23.0" }
 gstreamer-pbutils = { version = "0.23.0" }
 gstreamer-video = { version = "0.23.0" }
 hf-hub = "0.3.2"
-image = { version = "0.24.7", default-features = false, features = [
+image = { version = "0.25.2", default-features = false, features = [
     "jpeg",
     "png",
 ] }
