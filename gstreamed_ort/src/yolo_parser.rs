@@ -1,78 +1,120 @@
 use gstreamed_common::{
     annotate::annotate_image_with_bboxes,
-    bbox::{non_maximum_suppression, Bbox, KeyPoint},
+    bbox::{non_maximum_suppression, Bbox},
+    coco_classes,
 };
 use image::DynamicImage;
-use ndarray::{s, ArrayView, IxDyn};
+use ndarray::{s, ArrayView, Axis, Dim, IxDyn};
 
-fn parse_predictions(
+use crate::ImgDimensions;
+
+/// Parse yolov8 predictions via `ort`.
+pub fn parse_predictions(
     preds: ArrayView<f32, IxDyn>,
+    scaled_dims: ImgDimensions,
+    num_clases: u32,
     conf_threshold: f32,
     nms_threshold: f32,
-) -> Vec<Vec<Bbox<Vec<KeyPoint>>>> {
-    // in candle case we have:
-    // initial pred.shape: [84, 4620]
-    // pred.shape: [84]
-    // pred.len(): 84
-    let shape = preds.shape();
-    log::debug!("preds.shape: {shape:?}");
-    // TODO study wtf they doing in ultralytics yolo rust example
-    let (pred_size, npreds) = (shape[1], shape[2]);
-    let nclasses = pred_size - 4;
-    // The bounding boxes grouped by (maximum) class index.
-    let mut bboxes: Vec<Vec<Bbox<Vec<KeyPoint>>>> = (0..nclasses).map(|_| vec![]).collect();
-    // Extract the bounding boxes for which confidence is above the threshold.
-    for index in 0..npreds {
-        let pred_view = preds.slice(s![.., .., index]);
-        // log::debug!("pred_view.shape: {:?}", pred_view.shape());
-        let pred: Vec<f32> = pred_view.iter().copied().collect();
-        // log::debug!("pred: {pred:?}");
-        // std::process::exit(0);
-        let confidence = *pred[4..].iter().max_by(|x, y| x.total_cmp(y)).unwrap();
-        if confidence > conf_threshold {
-            let mut class_index = 0;
-            for i in 0..nclasses {
-                if pred[4 + i] > pred[4 + class_index] {
-                    class_index = i
-                }
-            }
-            if pred[class_index + 4] > 0. {
-                let bbox = Bbox {
-                    xmin: pred[0] - pred[2] / 2.,
-                    ymin: pred[1] - pred[3] / 2.,
-                    xmax: pred[0] + pred[2] / 2.,
-                    ymax: pred[1] + pred[3] / 2.,
-                    confidence,
-                    data: vec![],
-                };
-                if bbox.xmin < 0.0 || bbox.ymin < 0.0 || bbox.xmax < 0.0 || bbox.ymax < 0.0 {
-                    log::debug!("bbox with negative coords: {bbox:?}");
-                    log::debug!("from preds: {pred:?}");
-                } else {
-                    bboxes[class_index].push(bbox)
-                }
+) -> anyhow::Result<Vec<Vec<Bbox>>> {
+    // preds.shape: [bsz, embedding, anchors]
+    // [1, 84, 5040]
+    // TODO batch support with another loop outside
+
+    log::debug!("preds.shape: {:?}", preds.shape());
+    // Get rid of the first axis.
+    // Need to specify full dimensions here so rust can infer slices correctly later.
+    let preds: ArrayView<f32, Dim<[usize; 2]>> = preds.slice(s![0, .., ..]);
+    // Gives us a shape of [84, 5040].
+    log::debug!("preds2.shape: {:?}", preds.shape());
+
+    let mut bboxes_per_class: Vec<Vec<Bbox>> = vec![Vec::new(); num_clases as usize];
+    for pred in preds.axis_iter(Axis(1)) {
+        log::trace!("pred.shape: {:?}", pred.shape());
+        // Separate bbox and class values.
+        // First 4 values correspond to bbox cx, cy, w, h
+        const BBOX_OFFSET: usize = 4;
+        let bbox = pred.slice(s![0..BBOX_OFFSET]);
+        let clss = pred.slice(s![BBOX_OFFSET..BBOX_OFFSET + num_clases as usize]);
+
+        // Determine top1 class and its confidence.
+        let mut max_class_id = 0;
+        let mut max_confidence = 0f32;
+        for (idx, cls_conf) in clss.into_iter().enumerate() {
+            if cls_conf > &max_confidence {
+                max_confidence = *cls_conf;
+                max_class_id = idx;
             }
         }
+
+        log::trace!("max class id {max_class_id:?}: {max_confidence:?}");
+
+        // Check confidence > threshold.
+        if max_confidence < conf_threshold {
+            continue;
+        }
+
+        let cx = bbox[0];
+        let cy = bbox[1];
+        let w = bbox[2];
+        let h = bbox[3];
+
+        let xmin = cx - w / 2.;
+        let ymin = cy - h / 2.;
+        let xmax = xmin + w;
+        let ymax = ymin + h;
+
+        // Bound coords to scaled dimensions, so bboxes don't go outside the image.
+        let y_bbox = Bbox {
+            xmin: xmin.max(0.0f32).min(scaled_dims.width),
+            ymin: ymin.max(0.0f32).min(scaled_dims.height),
+            xmax: xmax.max(0.0f32).min(scaled_dims.width),
+            ymax: ymax.max(0.0f32).min(scaled_dims.height),
+            confidence: max_confidence,
+            data: vec![],
+        };
+
+        bboxes_per_class[max_class_id].push(y_bbox);
     }
-    // std::process::exit(0);
+
     // nms
-    non_maximum_suppression(&mut bboxes, nms_threshold);
-    bboxes
+    log::debug!(
+        "be4 nms bboxes, len: {:?}",
+        bboxes_per_class.iter().map(|v| v.len()).sum::<usize>()
+    );
+    non_maximum_suppression(&mut bboxes_per_class, nms_threshold);
+
+    Ok(bboxes_per_class)
 }
 
 /// Equivalent of report_detect for candle, but using ndarray ArrayView as input
 /// so this can be used for ort predictions.
 pub fn report_detect(
-    pred_view: ArrayView<f32, IxDyn>,
+    predicted: ArrayView<f32, IxDyn>,
     img: DynamicImage,
-    w: usize,
-    h: usize,
+    scaled_dims: ImgDimensions,
     confidence_threshold: f32,
     nms_threshold: f32,
     legend_size: u32,
 ) -> anyhow::Result<DynamicImage> {
-    let bboxes = parse_predictions(pred_view, confidence_threshold, nms_threshold);
+    let bboxes = parse_predictions(
+        predicted,
+        scaled_dims,
+        coco_classes::NAMES.len() as u32,
+        confidence_threshold,
+        nms_threshold,
+    )?;
+    log::debug!("{bboxes:?}");
+    log::debug!(
+        "after nms bboxes, len: {:?}",
+        bboxes.iter().map(|v| v.len()).sum::<usize>()
+    );
 
     // Annotate the original image and print boxes information.
-    Ok(annotate_image_with_bboxes(img, w, h, legend_size, &bboxes))
+    Ok(annotate_image_with_bboxes(
+        img,
+        scaled_dims.width as usize,
+        scaled_dims.height as usize,
+        legend_size,
+        &bboxes,
+    ))
 }

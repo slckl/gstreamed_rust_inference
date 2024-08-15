@@ -60,9 +60,9 @@ pub fn load_model(which: Which, device: &Device) -> anyhow::Result<YoloV8> {
 
 fn report_detect(
     pred: &Tensor,
-    img: DynamicImage,
-    w: usize,
-    h: usize,
+    og_img: DynamicImage,
+    scaled_width: usize,
+    scaled_height: usize,
     confidence_threshold: f32,
     nms_threshold: f32,
     legend_size: u32,
@@ -73,7 +73,7 @@ fn report_detect(
     let (pred_size, npreds) = pred.dims2()?;
     let nclasses = pred_size - 4;
     // The bounding boxes grouped by (maximum) class index.
-    let mut bboxes: Vec<Vec<Bbox<Vec<KeyPoint>>>> = (0..nclasses).map(|_| vec![]).collect();
+    let mut bboxes: Vec<Vec<Bbox>> = (0..nclasses).map(|_| vec![]).collect();
     // Extract the bounding boxes for which confidence is above the threshold.
     // Since we compute bboxes on cpu, transfer whole prediction tensor to cpu, so it's not done inside a loop.
     let pred = pred.to_device(&Device::Cpu)?.to_dtype(DType::F32)?;
@@ -112,7 +112,7 @@ fn report_detect(
 
     // Annotate the original image and print boxes information.
     let start = Instant::now();
-    let annotated = annotate_image_with_bboxes(img, w, h, legend_size, &bboxes);
+    let annotated = annotate_image_with_bboxes(og_img, scaled_width, scaled_height, legend_size, &bboxes);
     frame_times.annotation = start.elapsed();
 
     Ok(annotated)
@@ -132,7 +132,7 @@ pub fn process_frame(
 ) -> anyhow::Result<DynamicImage> {
     // Resize buffer to match input size of model.
     let start = Instant::now();
-    let (width, height) = {
+    let (scaled_width, scaled_height) = {
         let w = frame.width() as usize;
         let h = frame.height() as usize;
         if w < h {
@@ -144,9 +144,13 @@ pub fn process_frame(
             (640, h / 32 * 32)
         }
     };
-    let img = frame.resize_exact(
-        width as u32,
-        height as u32,
+    log::debug!("scaled w: {scaled_width}, scaled h: {scaled_height}");
+    if true {
+        std::process::exit(0);
+    }
+    let scaled_img = frame.resize_exact(
+        scaled_width as u32,
+        scaled_height as u32,
         image::imageops::FilterType::Nearest,
         // image::imageops::FilterType::CatmullRom,
     );
@@ -154,8 +158,8 @@ pub fn process_frame(
 
     // Convert image buffer to tensor.
     let start = Instant::now();
-    let data = img.into_rgb8().into_raw();
-    let image_t = Tensor::from_vec(data, (height, width, 3), device)?.permute((2, 0, 1))?;
+    let data = scaled_img.into_rgb8().into_raw();
+    let image_t = Tensor::from_vec(data, (scaled_height, scaled_width, 3), device)?.permute((2, 0, 1))?;
     let image_t = (image_t.unsqueeze(0)?.to_dtype(DType::F32)? * (1. / 255.))?;
     frame_times.buffer_to_tensor = start.elapsed();
 
@@ -168,8 +172,8 @@ pub fn process_frame(
     let image_t = report_detect(
         &predictions,
         frame,
-        width,
-        height,
+        scaled_width,
+        scaled_height,
         conf_thresh,
         nms_thresh,
         legend_size,

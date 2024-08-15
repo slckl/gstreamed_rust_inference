@@ -511,6 +511,7 @@ fn make_anchors(
     let stride_tensor = Tensor::cat(stride_tensor.as_slice(), 0)?.unsqueeze(1)?;
     Ok((anchor_points, stride_tensor))
 }
+
 fn dist2bbox(distance: &Tensor, anchor_points: &Tensor) -> Result<Tensor> {
     let chunks = distance.chunk(2, 1)?;
     let lt = &chunks[0];

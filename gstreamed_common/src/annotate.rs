@@ -1,24 +1,21 @@
-use crate::{
-    bbox::{Bbox, KeyPoint},
-    coco_classes,
-};
+use crate::{bbox::Bbox, coco_classes};
 use image::DynamicImage;
 
 /// Draws bboxes on the given image.
 /// Returns the same image (just annotated now).
 pub fn annotate_image_with_bboxes(
-    img: DynamicImage,
-    w: usize,
-    h: usize,
+    og_img: DynamicImage,
+    scaled_width: usize,
+    scaled_height: usize,
     legend_size: u32,
-    bboxes: &[Vec<Bbox<Vec<KeyPoint>>>],
+    bboxes: &[Vec<Bbox>],
 ) -> DynamicImage {
-    let (initial_h, initial_w) = (img.height(), img.width());
-    let w_ratio = initial_w as f32 / w as f32;
-    let h_ratio = initial_h as f32 / h as f32;
+    let (initial_h, initial_w) = (og_img.height(), og_img.width());
+    let w_ratio = initial_w as f32 / scaled_width as f32;
+    let h_ratio = initial_h as f32 / scaled_height as f32;
     let font = Vec::from(include_bytes!("roboto-mono-stripped.ttf") as &[u8]);
     let font = rusttype::Font::try_from_vec(font);
-    let mut img = img.into_rgb8();
+    let mut img = og_img.into_rgb8();
     for (class_index, bboxes_for_class) in bboxes.iter().enumerate() {
         for b in bboxes_for_class.iter() {
             log::trace!("{}: {:?}", coco_classes::NAMES[class_index], b);
