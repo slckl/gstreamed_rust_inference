@@ -1,8 +1,12 @@
-use std::ops::Deref;
+use std::{ops::Deref, time::Instant};
 
-use image::{imageops::{resize, FilterType}, DynamicImage, GenericImageView, RgbImage};
+use gstreamed_common::frame_times::FrameTimes;
+use image::{
+    imageops::{resize, FilterType},
+    DynamicImage, GenericImageView, RgbImage,
+};
 use ndarray::{Array, Array4, ArrayView, CowArray, Dimension, IxDyn};
-use ort::{tensor::OrtOwnedTensor, ExecutionProvider, SessionBuilder, Value};
+use ort::{tensor::OrtOwnedTensor, Value};
 
 use crate::{yolo_parser::report_detect, ImgDimensions};
 
@@ -27,7 +31,7 @@ fn image_from_ndarray<D: Dimension>(
 }
 
 /// Transforms the input `image` by converting colors, resizing and loading the image buffer into an [Array].
-/// 
+///
 /// Returns the scaled image inside ndarray [Array4] and scaled dims inside [ImgDimensions].
 fn preprocess_image(
     image: &DynamicImage,
@@ -50,7 +54,7 @@ fn preprocess_image(
         &image,
         scaled_dims.width as u32,
         scaled_dims.height as u32,
-        FilterType::Triangle,
+        FilterType::Nearest,
     );
     log::debug!("scaled_image.dimensions: {:?}", scaled_image.dimensions());
 
@@ -78,36 +82,35 @@ fn preprocess_image(
     Ok((image_array, scaled_dims))
 }
 
-pub fn process_image(og_image: DynamicImage) -> anyhow::Result<DynamicImage> {
-    // TODO warmup with synthetic image of the same dims
-    let ort_env = ort::Environment::builder()
-        .with_name("yolov8")
-        .with_execution_providers([ExecutionProvider::CPU(Default::default())])
-        .build()?
-        .into_arc();
-
-    let session = SessionBuilder::new(&ort_env)?
-        // .with_optimization_level(GraphOptimizationLevel::Level1)?
-        // .with_intra_threads(1)?
-        .with_model_from_file("_models/yolov8s.640x360.cpu.onnx")?;
-    log::debug!("session: {session:?}");
+pub fn process_image(
+    session: &ort::Session,
+    og_image: DynamicImage,
+) -> anyhow::Result<DynamicImage> {
+    let mut frame_times = FrameTimes::default();
 
     // FIXME determine target_dims based on model?
     let model_input_dims = ImgDimensions::new(640f32, 384f32);
 
+    let start = Instant::now();
     let (scaled_image_array, scaled_dims) = preprocess_image(&og_image, model_input_dims)?;
+    frame_times.buffer_resize = start.elapsed();
 
+    let start = Instant::now();
     let scaled_image_array = CowArray::from(scaled_image_array).into_dyn();
     log::debug!("image_array.shape: {:?}", scaled_image_array.shape());
     log::debug!("image_array.strides: {:?}", scaled_image_array.strides());
+
     // read into ndarray
     let input = vec![Value::from_array(session.allocator(), &scaled_image_array)?];
+    frame_times.buffer_to_tensor = start.elapsed();
 
     // and run
+    let start = Instant::now();
     let outputs: Vec<Value> = session.run(input)?;
     let outputs: OrtOwnedTensor<f32, _> = outputs[0].try_extract()?;
     let outputs = outputs.view();
     let outputs: &ArrayView<f32, IxDyn> = outputs.deref();
+    frame_times.forward_pass = start.elapsed();
     // output shape is 1 x 84 x 5040
     // AKA [bsz, embedding, anchors]
     // embedding is 4 bbox "coords" (center_x, center_y, width, height) + 80 COCO classes long
@@ -122,7 +125,9 @@ pub fn process_image(og_image: DynamicImage) -> anyhow::Result<DynamicImage> {
         conf_threshold,
         0.45,
         14,
-    )
-    .unwrap();
+        &mut frame_times,
+    )?;
+
+    log::debug!("{frame_times:?}");
     Ok(img)
 }

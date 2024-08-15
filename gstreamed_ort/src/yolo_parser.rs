@@ -1,7 +1,10 @@
+use std::time::Instant;
+
 use gstreamed_common::{
     annotate::annotate_image_with_bboxes,
     bbox::{non_maximum_suppression, Bbox},
     coco_classes,
+    frame_times::FrameTimes,
 };
 use image::DynamicImage;
 use ndarray::{s, ArrayView, Axis, Dim, IxDyn};
@@ -15,11 +18,13 @@ pub fn parse_predictions(
     num_clases: u32,
     conf_threshold: f32,
     nms_threshold: f32,
+    frame_times: &mut FrameTimes,
 ) -> anyhow::Result<Vec<Vec<Bbox>>> {
     // preds.shape: [bsz, embedding, anchors]
     // [1, 84, 5040]
     // TODO batch support with another loop outside
 
+    let start = Instant::now();
     log::debug!("preds.shape: {:?}", preds.shape());
     // Get rid of the first axis.
     // Need to specify full dimensions here so rust can infer slices correctly later.
@@ -75,13 +80,16 @@ pub fn parse_predictions(
 
         bboxes_per_class[max_class_id].push(y_bbox);
     }
+    frame_times.bbox_extraction = start.elapsed();
 
     // nms
+    let start = Instant::now();
     log::debug!(
         "be4 nms bboxes, len: {:?}",
         bboxes_per_class.iter().map(|v| v.len()).sum::<usize>()
     );
     non_maximum_suppression(&mut bboxes_per_class, nms_threshold);
+    frame_times.nms = start.elapsed();
 
     Ok(bboxes_per_class)
 }
@@ -95,6 +103,7 @@ pub fn report_detect(
     confidence_threshold: f32,
     nms_threshold: f32,
     legend_size: u32,
+    frame_times: &mut FrameTimes,
 ) -> anyhow::Result<DynamicImage> {
     let bboxes = parse_predictions(
         predicted,
@@ -102,6 +111,7 @@ pub fn report_detect(
         coco_classes::NAMES.len() as u32,
         confidence_threshold,
         nms_threshold,
+        frame_times,
     )?;
     log::debug!("{bboxes:?}");
     log::debug!(
@@ -109,12 +119,16 @@ pub fn report_detect(
         bboxes.iter().map(|v| v.len()).sum::<usize>()
     );
 
+    let start = Instant::now();
     // Annotate the original image and print boxes information.
-    Ok(annotate_image_with_bboxes(
+    let annotated = annotate_image_with_bboxes(
         img,
         scaled_dims.width as usize,
         scaled_dims.height as usize,
         legend_size,
         &bboxes,
-    ))
+    );
+    frame_times.annotation = start.elapsed();
+
+    Ok(annotated)
 }
