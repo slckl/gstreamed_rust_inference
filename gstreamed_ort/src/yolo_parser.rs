@@ -4,7 +4,8 @@ use gstreamed_common::{
     annotate::annotate_image_with_bboxes,
     bbox::{non_maximum_suppression, Bbox},
     coco_classes,
-    frame_times::FrameTimes, img_dimensions::ImgDimensions,
+    frame_times::FrameTimes,
+    img_dimensions::ImgDimensions,
 };
 use image::DynamicImage;
 use ndarray::{s, ArrayView, Axis, Dim, IxDyn};

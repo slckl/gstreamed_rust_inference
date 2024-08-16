@@ -1,5 +1,3 @@
-
-
 /// Describes dimensions of an image.
 #[derive(Debug, Copy, Clone)]
 pub struct ImgDimensions {

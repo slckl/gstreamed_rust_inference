@@ -12,6 +12,8 @@ pub struct Args {
     input: PathBuf,
     #[arg(long, action, default_value = "false")]
     cuda: bool,
+    #[arg(long, short, default_value = "_models/yolov8s.onnx")]
+    model: String,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -24,29 +26,31 @@ fn main() -> anyhow::Result<()> {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
+    let args = Args::parse();
+
     // Load model into ort.
+    let ep = if args.cuda {
+        ExecutionProvider::CUDA(Default::default())
+    } else {
+        ExecutionProvider::CPU(Default::default())
+    };
+    // TODO test trt exec provider, but requires a rebuild of onnxruntime with trt enabled
     // TODO warmup with synthetic image of the same dims
-    let cuda_ep = ExecutionProvider::CUDA(Default::default());
-    log::debug!("cuda.is_available(): {}", cuda_ep.is_available());
-    let trt_ep = ExecutionProvider::TensorRT(Default::default());
-    log::debug!("tensorrt.is_available(): {}", trt_ep.is_available());
 
     let ort_env = ort::Environment::builder()
         .with_name("yolov8")
-        // .with_execution_providers([ExecutionProvider::CPU(Default::default())])
-        .with_execution_providers([cuda_ep])
-        // .with_execution_providers([trt_ep])
+        .with_execution_providers([ep])
         .build()?
         .into_arc();
 
     let session = SessionBuilder::new(&ort_env)?
         .with_optimization_level(GraphOptimizationLevel::Level3)?
         // .with_intra_threads(1)?
-        .with_model_from_file("_models/yolov8s.640x360.cpu.onnx")?;
+        .with_model_from_file(args.model)?;
     log::debug!("session: {session:?}");
 
     // Read image.
-    let og_image = image::open("sample.jpg")?;
+    let og_image = image::open(args.input)?;
 
     // for _ in 0..10 {
     // Process image.
