@@ -82,12 +82,11 @@ fn preprocess_image(
     Ok((image_array, scaled_dims))
 }
 
-pub fn process_image(
+pub fn infer_on_image(
     session: &ort::Session,
     og_image: DynamicImage,
+    frame_times: &mut FrameTimes,
 ) -> anyhow::Result<DynamicImage> {
-    let mut frame_times = FrameTimes::default();
-
     // FIXME determine target_dims based on model?
     let model_input_dims = ImgDimensions::new(640f32, 384f32);
 
@@ -125,9 +124,8 @@ pub fn process_image(
         conf_threshold,
         0.45,
         14,
-        &mut frame_times,
+        frame_times,
     )?;
 
-    log::debug!("{frame_times:?}");
     Ok(img)
 }
