@@ -11,6 +11,7 @@ gstreamed_common = { path = "../gstreamed_common" }
 # ext
 anyhow = { version = "1.0.75", features = ["backtrace"] }
 clap = { version = "4.4.3", features = ["derive"] }
+fast_image_resize = { version = "4.2.1", features = ["image"] }
 gstreamer = { version = "0.23.0" }
 gstreamer-pbutils = { version = "0.23.0" }
 gstreamer-video = { version = "0.23.0" }

@@ -1,10 +1,8 @@
-use std::{ops::Deref, time::Instant};
+use std::{ops::Deref, sync::LazyLock, time::Instant};
 
+use fast_image_resize::{ResizeOptions, Resizer};
 use gstreamed_common::{frame_times::FrameTimes, img_dimensions::ImgDimensions};
-use image::{
-    imageops::{resize, FilterType},
-    DynamicImage, GenericImageView, RgbImage,
-};
+use image::{DynamicImage, GenericImageView, RgbImage};
 use ndarray::{Array, Array4, ArrayView, CowArray, Dimension, IxDyn};
 use ort::{tensor::OrtOwnedTensor, Value};
 
@@ -50,12 +48,37 @@ fn preprocess_image(
     log::debug!("scale ratio: {ratio:?}");
     let scaled_dims = og_dims.scale(ratio);
 
-    let scaled_image = resize(
-        &image,
+    // Use `fast_image_resize` crate to resize the image.
+    // It has unsafe, but it is way faster than plain `image`, unfortunately...
+    let mut scaled_image = fast_image_resize::images::Image::new(
         scaled_dims.width as u32,
         scaled_dims.height as u32,
-        FilterType::Nearest,
+        fast_image_resize::PixelType::U8x3,
     );
+
+    let mut resizer = Resizer::new();
+
+    let image = DynamicImage::ImageRgb8(image);
+    resizer.resize(
+        &image,
+        &mut scaled_image,
+        &ResizeOptions::new().resize_alg(fast_image_resize::ResizeAlg::Nearest),
+    )?;
+
+    let scaled_image = RgbImage::from_raw(
+        scaled_dims.width as u32,
+        scaled_dims.height as u32,
+        scaled_image.into_vec(),
+    )
+    .unwrap();
+
+    // FIXME resize with image crate below is way slower than fast image resize above
+    // let scaled_image = image::imageops::resize(
+    //     &image,
+    //     scaled_dims.width as u32,
+    //     scaled_dims.height as u32,
+    //     image::imageops::FilterType::Nearest,
+    // );
     log::debug!("scaled_image.dimensions: {:?}", scaled_image.dimensions());
 
     // Load it into ndarray.

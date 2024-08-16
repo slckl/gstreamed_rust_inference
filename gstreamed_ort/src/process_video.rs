@@ -12,10 +12,6 @@ use ort::Session;
 use crate::inference;
 
 pub fn process_buffer(frame_dims: ImgDimensions, session: &Session, buffer: &mut gst::Buffer) {
-    // let file_info = &self.file_info;
-    // let model = &self.model;
-    // let device = &self.device;
-
     let mut frame_times = FrameTimes::default();
 
     let start = Instant::now();
