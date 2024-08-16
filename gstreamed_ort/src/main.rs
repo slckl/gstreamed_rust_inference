@@ -4,7 +4,7 @@ mod yolo_parser;
 use std::path::PathBuf;
 
 use clap::Parser;
-use ort::{ExecutionProvider, GraphOptimizationLevel, SessionBuilder};
+use ort::{ExecutionProvider, GraphOptimizationLevel, Session, SessionBuilder};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Debug, Parser)]
@@ -14,6 +14,21 @@ pub struct Args {
     cuda: bool,
     #[arg(long, short, default_value = "_models/yolov8s.onnx")]
     model: String,
+}
+
+fn infer_on_image(path: &PathBuf, session: &Session) -> anyhow::Result<()> {
+    // Read image.
+    let og_image = image::open(path)?;
+
+    // for _ in 0..10 {
+    // Process image.
+    let img = inference::process_image(&session, og_image.clone())?;
+    // Save output.
+    let output_path = path.with_extension("out.jpg");
+    img.save(output_path)?;
+    // }
+
+    Ok(())
 }
 
 fn main() -> anyhow::Result<()> {
@@ -49,15 +64,15 @@ fn main() -> anyhow::Result<()> {
         .with_model_from_file(args.model)?;
     log::debug!("session: {session:?}");
 
-    // Read image.
-    let og_image = image::open(args.input)?;
-
-    // for _ in 0..10 {
-    // Process image.
-    let img = inference::process_image(&session, og_image.clone())?;
-    // Save output.
-    img.save("output.jpg")?;
-    // }
+    match args.input.extension().and_then(|os_str| os_str.to_str()) {
+        Some("mp4" | "mkv") => todo!("video inference"),
+        Some("jpeg" | "jpg" | "png") => infer_on_image(&args.input, &session)?,
+        Some(unk) => log::error!("Unhandled file extension: {unk}"),
+        None => log::error!(
+            "Input path does not have valid file extension: {:?}",
+            args.input
+        ),
+    }
 
     Ok(())
 }

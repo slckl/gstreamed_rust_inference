@@ -1,3 +1,5 @@
+//! Largely modified candle code.
+
 use crate::{bbox::Bbox, coco_classes};
 use image::DynamicImage;
 

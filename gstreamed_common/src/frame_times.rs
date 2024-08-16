@@ -1,7 +1,7 @@
 use std::fmt::{self, Debug};
 use std::time::Duration;
 
-/// Various timings for processing a single video frame.]
+/// Various timings for processing a single video frame.
 #[derive(Default)]
 pub struct FrameTimes {
     pub frame_to_buffer: Duration,
