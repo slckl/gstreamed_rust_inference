@@ -75,7 +75,7 @@ pub fn process_video(path: &Path, session: Session) -> anyhow::Result<()> {
                 break;
             }
             MessageView::Eos(..) => {
-                log::error!("Pipeline reached end of stream.");
+                log::info!("Pipeline reached end of stream.");
                 break;
             }
             _ => (),
