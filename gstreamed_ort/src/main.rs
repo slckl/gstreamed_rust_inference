@@ -6,7 +6,7 @@ mod yolo_parser;
 use std::path::PathBuf;
 
 use clap::Parser;
-use ort::{ExecutionProvider, GraphOptimizationLevel, SessionBuilder};
+use ort::{CPUExecutionProvider, CUDAExecutionProvider, GraphOptimizationLevel, SessionBuilder};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Debug, Parser)]
@@ -32,23 +32,22 @@ fn main() -> anyhow::Result<()> {
 
     // Load model into ort.
     let ep = if args.cuda {
-        ExecutionProvider::CUDA(Default::default())
+        CUDAExecutionProvider::default().build()
+        // ExecutionProvider::CUDA(Default::default())
     } else {
-        ExecutionProvider::CPU(Default::default())
+        CPUExecutionProvider::default().build()
+        // ExecutionProvider::CPU(Default::default())
     };
     // TODO test trt exec provider, but requires a rebuild of onnxruntime with trt enabled
     // TODO warmup with synthetic image of the same dims
 
-    let ort_env = ort::Environment::builder()
-        .with_name("yolov8")
-        .with_execution_providers([ep])
-        .build()?
-        .into_arc();
+    ort::init().with_execution_providers([ep]).commit()?;
 
-    let session = SessionBuilder::new(&ort_env)?
+    let session = SessionBuilder::new()?
         .with_optimization_level(GraphOptimizationLevel::Level3)?
         // .with_intra_threads(1)?
-        .with_model_from_file(args.model)?;
+        .commit_from_file(args.model)?;
+    // .with_model_from_file(args.model)?;
     log::debug!("session: {session:?}");
 
     match args.input.extension().and_then(|os_str| os_str.to_str()) {

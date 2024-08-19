@@ -1,10 +1,9 @@
-use std::{ops::Deref, sync::LazyLock, time::Instant};
+use std::time::Instant;
 
 use fast_image_resize::{ResizeOptions, Resizer};
 use gstreamed_common::{frame_times::FrameTimes, img_dimensions::ImgDimensions};
 use image::{DynamicImage, GenericImageView, RgbImage};
-use ndarray::{Array, Array4, ArrayView, CowArray, Dimension, IxDyn};
-use ort::{tensor::OrtOwnedTensor, Value};
+use ndarray::{Array, Array4, CowArray, Dimension};
 
 use crate::yolo_parser::report_detect;
 
@@ -117,21 +116,19 @@ pub fn infer_on_image(
     let (scaled_image_array, scaled_dims) = preprocess_image(&og_image, model_input_dims)?;
     frame_times.buffer_resize = start.elapsed();
 
+    // Load image into ndarray, and that into ort.
     let start = Instant::now();
     let scaled_image_array = CowArray::from(scaled_image_array).into_dyn();
     log::debug!("image_array.shape: {:?}", scaled_image_array.shape());
     log::debug!("image_array.strides: {:?}", scaled_image_array.strides());
 
-    // read into ndarray
-    let input = vec![Value::from_array(session.allocator(), &scaled_image_array)?];
+    let input = ort::inputs![&scaled_image_array]?;
     frame_times.buffer_to_tensor = start.elapsed();
 
-    // and run
+    // Now, we can finally run inference.
     let start = Instant::now();
-    let outputs: Vec<Value> = session.run(input)?;
-    let outputs: OrtOwnedTensor<f32, _> = outputs[0].try_extract()?;
-    let outputs = outputs.view();
-    let outputs: &ArrayView<f32, IxDyn> = outputs.deref();
+    let outputs = session.run(input)?;
+    let outputs = outputs[0].try_extract_tensor()?;
     frame_times.forward_pass = start.elapsed();
     // output shape is 1 x 84 x 5040
     // AKA [bsz, embedding, anchors]
@@ -141,7 +138,7 @@ pub fn infer_on_image(
     // parse and annotate outputs
     let conf_threshold = 0.25;
     let img = report_detect(
-        outputs.into(),
+        outputs,
         og_image,
         scaled_dims,
         conf_threshold,
