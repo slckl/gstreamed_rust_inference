@@ -17,10 +17,7 @@ gstreamer = { version = "0.23.0" }
 gstreamer-pbutils = { version = "0.23.0" }
 gstreamer-video = { version = "0.23.0" }
 hf-hub = "0.3.2"
-image = { version = "0.25.2", default-features = false, features = [
-    "jpeg",
-    "png",
-] }
+image.workspace = true
 log = "0.4.22"
 tracing = { version = "0.1.40" }
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }

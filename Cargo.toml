@@ -1,7 +1,10 @@
 [workspace]
 resolver = "2"
-members = [
-    "gstreamed_candle",
-    "gstreamed_common",
-    "gstreamed_ort",
-]
+members = ["gstreamed_candle", "gstreamed_common", "gstreamed_ort"]
+
+[workspace.dependencies]
+image = { version = "0.25.2", default-features = false, features = [
+    "jpeg",
+    "png",
+] }
+imageproc = { version = "0.25.0", default-features = false }
