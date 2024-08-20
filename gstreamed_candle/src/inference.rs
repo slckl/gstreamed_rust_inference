@@ -98,6 +98,8 @@ fn report_detect(
                     ymax: pred[1] + pred[3] / 2.,
                     confidence,
                     data: vec![],
+                    class: class_index,
+                    tracker_id: None,
                 };
                 bboxes[class_index].push(bbox)
             }

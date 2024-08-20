@@ -10,6 +10,7 @@ pub struct FrameTimes {
     pub forward_pass: Duration,
     pub bbox_extraction: Duration,
     pub nms: Duration,
+    pub tracking: Duration,
     pub annotation: Duration,
     pub buffer_to_frame: Duration,
 }
@@ -22,6 +23,7 @@ impl FrameTimes {
             + self.forward_pass
             + self.bbox_extraction
             + self.nms
+            + self.tracking
             + self.annotation
             + self.buffer_to_frame
     }
@@ -39,6 +41,7 @@ impl Debug for FrameTimes {
             forward_pass: {:?},
             bbox_extraction: {:?},
             nms: {:?},
+            tracking: {:?},
             annotation: {:?},
             buffer_to_frame: {:?}
             ",
@@ -49,6 +52,7 @@ impl Debug for FrameTimes {
             self.forward_pass,
             self.bbox_extraction,
             self.nms,
+            self.tracking,
             self.annotation,
             self.buffer_to_frame,
         )

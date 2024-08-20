@@ -1,11 +1,15 @@
 use std::time::Instant;
 
 use fast_image_resize::{ResizeOptions, Resizer};
-use gstreamed_common::{frame_times::FrameTimes, img_dimensions::ImgDimensions};
+use gstreamed_common::{
+    annotate::annotate_image_with_bboxes, bbox::Bbox, coco_classes, frame_times::FrameTimes,
+    img_dimensions::ImgDimensions,
+};
 use image::{DynamicImage, GenericImageView, RgbImage};
 use ndarray::{Array, Array4, CowArray, Dimension};
+use similari::prelude::{Sort, Universal2DBox};
 
-use crate::yolo_parser::report_detect;
+use crate::yolo_parser::parse_predictions;
 
 // FIXME this function does not quite work right, I think...
 /// Creates a new image from the given [Array].
@@ -106,6 +110,7 @@ fn preprocess_image(
 
 pub fn infer_on_image(
     session: &ort::Session,
+    tracker: Option<&mut Sort>,
     og_image: DynamicImage,
     frame_times: &mut FrameTimes,
 ) -> anyhow::Result<DynamicImage> {
@@ -135,17 +140,107 @@ pub fn infer_on_image(
     // embedding is 4 bbox "coords" (center_x, center_y, width, height) + 80 COCO classes long
     log::debug!("got outputs: {outputs:?}");
 
-    // parse and annotate outputs
+    // Parse and annotate outputs.
     let conf_threshold = 0.25;
-    let img = report_detect(
+    let nms_threshold = 0.45;
+    let bboxes = parse_predictions(
         outputs,
-        og_image,
         scaled_dims,
+        coco_classes::NAMES.len() as u32,
         conf_threshold,
-        0.45,
-        14,
+        nms_threshold,
         frame_times,
     )?;
+    log::debug!("{bboxes:?}");
+    log::debug!(
+        "after nms bboxes, len: {:?}",
+        bboxes.iter().map(|v| v.len()).sum::<usize>()
+    );
 
-    Ok(img)
+    // let all_bboxes: Vec<Bbox> = bboxes.into_iter().flatten().collect();
+
+    // Perform tracking.
+    let mut tracked_bboxes: Option<Vec<Bbox>> = None;
+    if let Some(tracker) = tracker {
+        let start = Instant::now();
+        let all_bboxes: Vec<&Bbox> = bboxes.iter().flatten().collect();
+        let bboxes_4_tracking: Vec<_> = all_bboxes
+            .iter()
+            .map(|bbox| {
+                (
+                    Universal2DBox::ltwh(
+                        bbox.xmin,
+                        bbox.ymin,
+                        bbox.xmax - bbox.xmin,
+                        bbox.ymax - bbox.ymin,
+                    ),
+                    Some(bbox.class as i64),
+                )
+            })
+            .collect();
+        let tracks = tracker.predict(&bboxes_4_tracking);
+        tracked_bboxes = Some(
+            tracks
+                .iter()
+                .map(|track| {
+                    let tracked_bbox = &track.predicted_bbox;
+                    let class_id = track.custom_object_id.unwrap();
+                    let id = track.id;
+
+                    let cx = tracked_bbox.xc;
+                    let cy = tracked_bbox.yc;
+                    let h = tracked_bbox.height;
+                    let aspect = tracked_bbox.aspect;
+                    let w = aspect * h;
+
+                    let xmin = cx - w / 2f32;
+                    let ymin = cy - h / 2f32;
+                    let xmax = xmin + w;
+                    let ymax = ymin + h;
+
+                    Bbox {
+                        xmin: xmin.max(0.0f32).min(scaled_dims.width),
+                        ymin: ymin.max(0.0f32).min(scaled_dims.height),
+                        xmax: xmax.max(0.0f32).min(scaled_dims.width),
+                        ymax: ymax.max(0.0f32).min(scaled_dims.height),
+                        // FIXME tracker confidence is always very high
+                        confidence: tracked_bbox.confidence,
+                        data: vec![],
+                        class: class_id as usize,
+                        tracker_id: Some(id as i64),
+                    }
+                })
+                .collect(),
+        );
+        frame_times.tracking = start.elapsed();
+        log::debug!("{tracks:?}");
+    }
+    log::debug!("{tracked_bboxes:?}");
+
+    // Annotate the original image and print boxes information.
+    let start = Instant::now();
+    let legend_size = 14;
+
+    // Map tracked bboxes back to per class bbox vec...
+    let bboxes = match tracked_bboxes {
+        Some(tracked) => {
+            let mut bboxes_by_class = vec![Vec::new(); coco_classes::NAMES.len()];
+            for tracked_bbox in tracked {
+                bboxes_by_class[tracked_bbox.class].push(tracked_bbox);
+            }
+            bboxes_by_class
+        }
+        None => bboxes,
+    };
+
+    let annotated = annotate_image_with_bboxes(
+        og_image,
+        scaled_dims.width as usize,
+        scaled_dims.height as usize,
+        legend_size,
+        &bboxes,
+    );
+    frame_times.annotation = start.elapsed();
+
+    Ok(annotated)
 }

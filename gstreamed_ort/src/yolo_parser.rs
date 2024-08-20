@@ -1,13 +1,10 @@
 use std::time::Instant;
 
 use gstreamed_common::{
-    annotate::annotate_image_with_bboxes,
     bbox::{non_maximum_suppression, Bbox},
-    coco_classes,
     frame_times::FrameTimes,
     img_dimensions::ImgDimensions,
 };
-use image::DynamicImage;
 use ndarray::{s, ArrayView, Axis, Dim, IxDyn};
 
 /// Parse yolov8 predictions via `ort`.
@@ -75,6 +72,8 @@ pub fn parse_predictions(
             ymax: ymax.max(0.0f32).min(scaled_dims.height),
             confidence: max_confidence,
             data: vec![],
+            class: max_class_id,
+            tracker_id: None,
         };
 
         bboxes_per_class[max_class_id].push(y_bbox);
@@ -91,43 +90,4 @@ pub fn parse_predictions(
     frame_times.nms = start.elapsed();
 
     Ok(bboxes_per_class)
-}
-
-/// Equivalent of report_detect for candle, but using ndarray ArrayView as input
-/// so this can be used for ort predictions.
-pub fn report_detect(
-    predicted: ArrayView<f32, IxDyn>,
-    img: DynamicImage,
-    scaled_dims: ImgDimensions,
-    confidence_threshold: f32,
-    nms_threshold: f32,
-    legend_size: u32,
-    frame_times: &mut FrameTimes,
-) -> anyhow::Result<DynamicImage> {
-    let bboxes = parse_predictions(
-        predicted,
-        scaled_dims,
-        coco_classes::NAMES.len() as u32,
-        confidence_threshold,
-        nms_threshold,
-        frame_times,
-    )?;
-    log::debug!("{bboxes:?}");
-    log::debug!(
-        "after nms bboxes, len: {:?}",
-        bboxes.iter().map(|v| v.len()).sum::<usize>()
-    );
-
-    let start = Instant::now();
-    // Annotate the original image and print boxes information.
-    let annotated = annotate_image_with_bboxes(
-        img,
-        scaled_dims.width as usize,
-        scaled_dims.height as usize,
-        legend_size,
-        &bboxes,
-    );
-    frame_times.annotation = start.elapsed();
-
-    Ok(annotated)
 }

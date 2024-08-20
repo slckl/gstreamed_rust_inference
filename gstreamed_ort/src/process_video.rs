@@ -1,5 +1,6 @@
 use std::io::Write;
 use std::path::Path;
+use std::sync::Mutex;
 use std::time::Instant;
 
 use gstreamed_common::frame_times::FrameTimes;
@@ -8,10 +9,20 @@ use gstreamer::{self as gst};
 use gstreamer::{prelude::*, MessageView};
 use image::{DynamicImage, RgbImage};
 use ort::Session;
+use similari::prelude::PositionalMetricType::IoU;
+use similari::prelude::Sort;
+use similari::trackers::sort::metric::DEFAULT_MINIMAL_SORT_CONFIDENCE;
+use similari::trackers::sort::DEFAULT_SORT_IOU_THRESHOLD;
 
 use crate::inference;
 
-pub fn process_buffer(frame_dims: ImgDimensions, session: &Session, buffer: &mut gst::Buffer) {
+pub fn process_buffer(
+    frame_dims: ImgDimensions,
+    session: &Session,
+    // TODO make tracking optional
+    tracker: &Mutex<Sort>,
+    buffer: &mut gst::Buffer,
+) {
     let mut frame_times = FrameTimes::default();
 
     let start = Instant::now();
@@ -32,7 +43,9 @@ pub fn process_buffer(frame_dims: ImgDimensions, session: &Session, buffer: &mut
     frame_times.frame_to_buffer = start.elapsed();
 
     // process it using some model + draw overlays on the output image
-    let processed = inference::infer_on_image(session, image, &mut frame_times).unwrap();
+    let mut tracker = tracker.lock().unwrap();
+    let processed =
+        inference::infer_on_image(session, Some(&mut *tracker), image, &mut frame_times).unwrap();
 
     // processed.save("./output.jpg").unwrap();
     // std::process::exit(0);
@@ -57,9 +70,21 @@ pub fn process_video(path: &Path, session: Session) -> anyhow::Result<()> {
     log::info!("File info: {file_info:?}");
     let frame_dims = ImgDimensions::new(file_info.width as f32, file_info.height as f32);
 
+    // Configure tracker, we use similari library, which provides iou/sort trackers.
+    let tracker = Mutex::new(Sort::new(
+        1,
+        10,
+        1,
+        IoU(DEFAULT_SORT_IOU_THRESHOLD),
+        DEFAULT_MINIMAL_SORT_CONFIDENCE,
+        None,
+        1.0 / 20.0,
+        1.0 / 160.0,
+    ));
+
     // Build gst pipeline, which performs inference using the loaded model.
     let pipeline = build_pipeline(path.to_str().unwrap(), move |buf| {
-        process_buffer(frame_dims, &session, buf);
+        process_buffer(frame_dims, &session, &tracker, buf);
     })?;
 
     // Make it play and listen to events to know when it's done.

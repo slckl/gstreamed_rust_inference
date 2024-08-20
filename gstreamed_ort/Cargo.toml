@@ -21,5 +21,6 @@ log = "0.4.22"
 ndarray = { version = "0.16.1" }
 # ort = { version = "2.0.0-rc.5", default-features = false, features = ["ndarray", "download-binaries", "copy-dylibs", "cuda", "tensorrt"] }
 ort = { version = "2.0.0-rc.5", features = ["ndarray", "download-binaries", "copy-dylibs", "cuda", "tensorrt"] }
+similari-trackers-rs = { version = "0.26.11" }
 tracing = { version = "0.1.40" }
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }

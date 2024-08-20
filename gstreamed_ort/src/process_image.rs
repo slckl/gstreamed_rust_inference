@@ -14,7 +14,7 @@ pub fn process_image(path: &Path, session: &Session) -> anyhow::Result<()> {
 
     // for _ in 0..10 {
     // Process image.
-    let img = inference::infer_on_image(session, og_image.clone(), &mut frame_times)?;
+    let img = inference::infer_on_image(session, None, og_image.clone(), &mut frame_times)?;
     log::debug!("{frame_times:?}");
     // Save output.
     let output_path = path.with_extension("out.jpg");

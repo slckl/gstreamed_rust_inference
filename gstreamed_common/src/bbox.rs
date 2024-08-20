@@ -9,6 +9,8 @@ pub struct Bbox {
     pub ymax: f32,
     pub confidence: f32,
     pub data: Vec<KeyPoint>,
+    pub class: usize,
+    pub tracker_id: Option<i64>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
