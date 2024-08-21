@@ -11,9 +11,13 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Debug, Parser)]
 pub struct Args {
+    /// Path to input image (.jpeg/.png) or video file (.mp4/.mkv).
     input: PathBuf,
+    /// Whether to attempt to use `cuda` hw acceleration.
+    /// This may silently fail and fallback to cpu acceleration presently.
     #[arg(long, action, default_value = "false")]
     cuda: bool,
+    /// Yolov8 onnx model file to use.
     #[arg(long, short, default_value = "_models/yolov8s.onnx")]
     model: String,
 }
@@ -33,10 +37,8 @@ fn main() -> anyhow::Result<()> {
     // Load model into ort.
     let ep = if args.cuda {
         CUDAExecutionProvider::default().build()
-        // ExecutionProvider::CUDA(Default::default())
     } else {
         CPUExecutionProvider::default().build()
-        // ExecutionProvider::CPU(Default::default())
     };
     // TODO test trt exec provider, but requires a rebuild of onnxruntime with trt enabled
     // TODO warmup with synthetic image of the same dims
