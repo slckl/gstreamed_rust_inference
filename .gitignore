@@ -1,6 +1,7 @@
 /target
 .idea
 *.mp4
+*.mkv
 *.pt
 *.onnx
 *.jpg
