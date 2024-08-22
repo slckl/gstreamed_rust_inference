@@ -14,9 +14,27 @@ Only object detection has been implemented here, there is no support for segment
 
 This is a largely adapted yolov8 example from candle examples, using the same model, just adapted to run inside a gstreamer pipeline. Models are downloaded from huggingface hub, from candle example models.
 
+Run from workspace directory as follows:
+```shell
+cargo run -r -p gstreamed_candle -- <INPUT> 
+```
+
+Additional CLI options:
+- `--cuda` - launches candle pipeline with cuda
+
 ## gstreamed_ort
 
-This is a modified version of `gstreamed_candle` to use `ort` instead of `candle`.
+This is a modified version of `gstreamed_candle` to use `onnxruntime` via `ort` instead of `candle`. This version boasts better performance and includes a few more whistles because of it.
+
+Run from workspace directory as follows:
+```shell
+cargo run -r -p gstreamed_ort -- <INPUT>
+```
+
+Additional CLI options:
+- `--cuda` - launches ort pipeline with cuda, may fail silently, watch your logs.
+- `--model <MODEL>` - allows specifying path to your own yolov8 .onnx file. Code assumes it's using COCO classes.
+- `--live` - whether to display "live" the processed video using gst's `autodisplaysink`. Currently very slow on nvidia (idk why).
 
 ### Models
 
