@@ -7,20 +7,17 @@ edition = "2021"
 
 [dependencies]
 # workspace
-gstreamed_common = { path = "../gstreamed_common" }
+gstreamed_common.workspace = true
 # ext
 anyhow = { version = "1.0.75", features = ["backtrace"] }
 clap = { version = "4.4.3", features = ["derive"] }
 fast_image_resize = { version = "4.2.1", features = ["image"] }
-gstreamer = { version = "0.23.0" }
-gstreamer-pbutils = { version = "0.23.0" }
-gstreamer-video = { version = "0.23.0" }
+gstreamer.workspace = true
 image.workspace = true
 imageproc.workspace = true
 log = "0.4.22"
 ndarray = { version = "0.16.1" }
-# ort = { version = "2.0.0-rc.5", default-features = false, features = ["ndarray", "download-binaries", "copy-dylibs", "cuda", "tensorrt"] }
-ort = { version = "2.0.0-rc.5", features = ["ndarray", "download-binaries", "copy-dylibs", "cuda", "tensorrt"] }
+ort = { version = "2.0.0-rc.5", default-features = false, features = ["ndarray", "download-binaries", "copy-dylibs", "cuda"] }
 similari-trackers-rs = { version = "0.26.11" }
 tracing = { version = "0.1.40" }
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }

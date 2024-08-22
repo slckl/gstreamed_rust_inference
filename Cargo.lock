@@ -1061,8 +1061,6 @@ dependencies = [
  "clap",
  "gstreamed_common",
  "gstreamer",
- "gstreamer-pbutils",
- "gstreamer-video",
  "hf-hub",
  "image",
  "log",
@@ -1093,8 +1091,6 @@ dependencies = [
  "fast_image_resize",
  "gstreamed_common",
  "gstreamer",
- "gstreamer-pbutils",
- "gstreamer-video",
  "image",
  "imageproc",
  "log",
@@ -1103,6 +1099,18 @@ dependencies = [
  "similari-trackers-rs",
  "tracing",
  "tracing-subscriber",
+]
+
+[[package]]
+name = "gstreamed_tracker"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "gstreamed_common",
+ "gstreamer",
+ "image",
+ "imageproc",
+ "log",
 ]
 
 [[package]]
@@ -1888,7 +1896,6 @@ version = "2.0.0-rc.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "45e45a172e6c0fb7d640e92c7740f4ea476bfc49ef5c52ea9c73e9fae32b09fe"
 dependencies = [
- "half",
  "ndarray",
  "ort-sys",
  "thiserror",

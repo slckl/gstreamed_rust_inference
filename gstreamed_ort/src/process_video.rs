@@ -20,7 +20,7 @@ pub fn process_buffer(
     frame_dims: ImgDimensions,
     session: &Session,
     // TODO make tracking optional
-    tracker: &Mutex<Sort>,
+    tracker: Option<&Mutex<Sort>>,
     buffer: &mut gst::Buffer,
 ) {
     let mut frame_times = FrameTimes::default();
@@ -43,9 +43,12 @@ pub fn process_buffer(
     frame_times.frame_to_buffer = start.elapsed();
 
     // process it using some model + draw overlays on the output image
-    let mut tracker = tracker.lock().unwrap();
-    let processed =
-        inference::infer_on_image(session, Some(&mut *tracker), image, &mut frame_times).unwrap();
+    let processed = if let Some(tracker) = tracker {
+        let mut tracker = tracker.lock().unwrap();
+        inference::infer_on_image(session, Some(&mut *tracker), image, &mut frame_times).unwrap()
+    } else {
+        inference::infer_on_image(session, None, image, &mut frame_times).unwrap()
+    };
 
     // processed.save("./output.jpg").unwrap();
     // std::process::exit(0);
@@ -74,7 +77,7 @@ pub fn process_video(input: &Path, live_playback: bool, session: Session) -> any
     let tracker = Mutex::new(Sort::new(
         1,
         10,
-        1,
+        10,
         IoU(DEFAULT_SORT_IOU_THRESHOLD),
         DEFAULT_MINIMAL_SORT_CONFIDENCE,
         None,
@@ -84,7 +87,7 @@ pub fn process_video(input: &Path, live_playback: bool, session: Session) -> any
 
     // Build gst pipeline, which performs inference using the loaded model.
     let pipeline = build_pipeline(input.to_str().unwrap(), live_playback, move |buf| {
-        process_buffer(frame_dims, &session, &tracker, buf);
+        process_buffer(frame_dims, &session, Some(&tracker), buf);
     })?;
 
     // Make it play and listen to events to know when it's done.

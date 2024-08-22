@@ -110,6 +110,9 @@ pub fn build_pipeline(
     let output_path = format!("{input_file}.out.mkv");
     file_sink.set_property_from_str("location", &output_path);
 
+    // FIXME live playback branch in parallel with encoding has very bad performance,
+    //  whereas standalone it worked fine.
+    //  Not entirely sure, why, have to investigate...
     if live_playback {
         let tee = gst::ElementFactory::make_with_name("tee", None)?;
         let display_queue = gst::ElementFactory::make_with_name("queue", Some("display_queue"))?;
