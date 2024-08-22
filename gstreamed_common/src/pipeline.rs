@@ -47,8 +47,17 @@ fn file_src_bin(input_file: &str) -> Result<gst::Element, glib::BoolError> {
 }
 
 // filesrc -> decodebin -> [candle] -> queue -> encode -> mkvmux
+/// Builds gst pipeline that takes input video, decodes it, runs inference
+/// on the decoded frames, and then annotates the frame with inference output.
+///
+/// The annotated output is saved into a separate file by default that follows the naming of the `input_file`, but appends `.out.mkv` to filename.
+///
+/// If `live_playback` is enabled, then we create a parallel branch
+/// with a gst `autovideosink`, which usually manages to create a window
+/// with live playback of the annotated output.
 pub fn build_pipeline(
     input_file: &str,
+    live_playback: bool,
     buffer_processor: impl Fn(&mut Buffer) + Send + Sync + 'static,
 ) -> Result<gst::Pipeline, glib::BoolError> {
     let pipeline = gst::Pipeline::new();
@@ -84,32 +93,72 @@ pub fn build_pipeline(
         PadProbeReturn::Ok
     });
 
-    // during dev, just dump output to autodisplaysink
-    let display_convert = gst::ElementFactory::make_with_name("videoconvert", None)?;
-    let display_sink = gst::ElementFactory::make_with_name("autovideosink", None)?;
-    pipeline.add_many([
-        &file_src_bin,
-        &video_convert,
-        &caps_filter,
-        &queue,
-        &display_convert,
-        &display_sink,
-    ])?;
-    gst::Element::link_many([
-        &file_src_bin,
-        &video_convert,
-        &caps_filter,
-        &queue,
-        &display_convert,
-        &display_sink,
-    ])?;
+    let encoder_convert = gst::ElementFactory::make_with_name("videoconvert", None)?;
+    // let encoder_factory =
+    // // if let Some(factory) =
+    // // gst::ElementFactory::find("nvh264enc") {
+    // //     factory
+    // // } else {
+    //     gst::ElementFactory::find("x264enc").unwrap();
+    // // };
+    // let encoder = encoder_factory.create().build()?;
+    let encoder = gst::ElementFactory::make_with_name("x264enc", None)?;
+    // Default is 2048, which for dynamic videos will look like ass.
+    encoder.set_property_from_str("bitrate", "8192");
+    let mkv_mux = gst::ElementFactory::make_with_name("matroskamux", None)?;
+    let file_sink = gst::ElementFactory::make_with_name("filesink", None)?;
+    let output_path = format!("{input_file}.out.mkv");
+    file_sink.set_property_from_str("location", &output_path);
 
-    // TODO video output to file
-    // // cpu encoder
-    // let encoder = gst::ElementFactory::make_with_name("x264enc", None)?;
-    // // mkv muxer
-    // let mkv_mux = gst::ElementFactory::make_with_name("matroskamux", None)?;
-    // let file_sink = gst::ElementFactory::make_with_name("filesink", None)?;
+    if live_playback {
+        let tee = gst::ElementFactory::make_with_name("tee", None)?;
+        let display_queue = gst::ElementFactory::make_with_name("queue", Some("display_queue"))?;
+        // Make display_queue leaky, so it doesn't block large pipelines.
+        display_queue.set_property_from_str("leaky", "downstream");
+        let encoder_queue = gst::ElementFactory::make_with_name("queue", Some("encoder_queue"))?;
+        let display_convert = gst::ElementFactory::make_with_name("videoconvert", None)?;
+        let display_sink = gst::ElementFactory::make_with_name("autovideosink", None)?;
+
+        // Add and link up to tee
+        let elements_to_tee = [&file_src_bin, &video_convert, &caps_filter, &queue, &tee];
+        pipeline.add_many(elements_to_tee)?;
+        gst::Element::link_many(elements_to_tee)?;
+
+        // Add and wire up the 2 output branches.
+        // Encoder/output branch.
+        let encoder_elements = [
+            &encoder_queue,
+            &encoder_convert,
+            &encoder,
+            &mkv_mux,
+            &file_sink,
+        ];
+        pipeline.add_many(encoder_elements)?;
+        // Tee -> encoder_queue
+        tee.link(&encoder_queue)?;
+        // encoder_queue -> ...
+        gst::Element::link_many(encoder_elements)?;
+
+        // Live display branch.
+        let display_elements = [&display_queue, &display_convert, &display_sink];
+        pipeline.add_many(display_elements)?;
+        tee.link(&display_queue)?;
+        gst::Element::link_many(display_elements)?;
+    } else {
+        // No live playback, so just wire everything through encoded output.
+        let elements = [
+            &file_src_bin,
+            &video_convert,
+            &caps_filter,
+            &queue,
+            &encoder_convert,
+            &encoder,
+            &mkv_mux,
+            &file_sink,
+        ];
+        pipeline.add_many(elements)?;
+        gst::Element::link_many(elements)?;
+    }
 
     Ok(pipeline)
 }

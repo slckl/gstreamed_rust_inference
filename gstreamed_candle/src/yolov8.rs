@@ -473,14 +473,6 @@ struct DetectionHead {
     span: tracing::Span,
 }
 
-#[derive(Debug)]
-struct PoseHead {
-    detect: DetectionHead,
-    cv4: [(ConvBlock, ConvBlock, Conv2d); 3],
-    kpt: (usize, usize),
-    span: tracing::Span,
-}
-
 fn make_anchors(
     xs0: &Tensor,
     xs1: &Tensor,
@@ -525,7 +517,9 @@ fn dist2bbox(distance: &Tensor, anchor_points: &Tensor) -> Result<Tensor> {
 
 struct DetectionHeadOut {
     pred: Tensor,
+    #[allow(dead_code)]
     anchors: Tensor,
+    #[allow(dead_code)]
     strides: Tensor,
 }
 
@@ -624,68 +618,6 @@ impl DetectionHead {
     }
 }
 
-impl PoseHead {
-    // kpt: keypoints, (17, 3)
-    // nc: num-classes, 80
-    fn load(
-        vb: VarBuilder,
-        nc: usize,
-        kpt: (usize, usize),
-        filters: (usize, usize, usize),
-    ) -> Result<Self> {
-        let detect = DetectionHead::load(vb.clone(), nc, filters)?;
-        let nk = kpt.0 * kpt.1;
-        let c4 = usize::max(filters.0 / 4, nk);
-        let cv4 = [
-            Self::load_cv4(vb.pp("cv4.0"), c4, nk, filters.0)?,
-            Self::load_cv4(vb.pp("cv4.1"), c4, nk, filters.1)?,
-            Self::load_cv4(vb.pp("cv4.2"), c4, nk, filters.2)?,
-        ];
-        Ok(Self {
-            detect,
-            cv4,
-            kpt,
-            span: tracing::span!(tracing::Level::TRACE, "pose-head"),
-        })
-    }
-
-    fn load_cv4(
-        vb: VarBuilder,
-        c1: usize,
-        nc: usize,
-        filter: usize,
-    ) -> Result<(ConvBlock, ConvBlock, Conv2d)> {
-        let block0 = ConvBlock::load(vb.pp("0"), filter, c1, 3, 1, None)?;
-        let block1 = ConvBlock::load(vb.pp("1"), c1, c1, 3, 1, None)?;
-        let conv = conv2d(c1, nc, 1, Default::default(), vb.pp("2"))?;
-        Ok((block0, block1, conv))
-    }
-
-    fn forward(&self, xs0: &Tensor, xs1: &Tensor, xs2: &Tensor) -> Result<Tensor> {
-        let _enter = self.span.enter();
-        let d = self.detect.forward(xs0, xs1, xs2)?;
-        let forward_cv = |xs: &Tensor, i: usize| {
-            let (b_sz, _, h, w) = xs.dims4()?;
-            let xs = self.cv4[i].0.forward(xs)?;
-            let xs = self.cv4[i].1.forward(&xs)?;
-            let xs = self.cv4[i].2.forward(&xs)?;
-            xs.reshape((b_sz, self.kpt.0 * self.kpt.1, h * w))
-        };
-        let xs0 = forward_cv(xs0, 0)?;
-        let xs1 = forward_cv(xs1, 1)?;
-        let xs2 = forward_cv(xs2, 2)?;
-        let xs = Tensor::cat(&[xs0, xs1, xs2], D::Minus1)?;
-        let (b_sz, _nk, hw) = xs.dims3()?;
-        let xs = xs.reshape((b_sz, self.kpt.0, self.kpt.1, hw))?;
-
-        let ys01 = ((xs.i((.., .., 0..2))? * 2.)?.broadcast_add(&d.anchors)? - 0.5)?
-            .broadcast_mul(&d.strides)?;
-        let ys2 = candle_nn::ops::sigmoid(&xs.i((.., .., 2..3))?)?;
-        let ys = Tensor::cat(&[ys01, ys2], 2)?.flatten(1, 2)?;
-        Tensor::cat(&[d.pred, ys], 1)
-    }
-}
-
 #[derive(Debug)]
 pub struct YoloV8 {
     net: DarkNet,
@@ -714,41 +646,5 @@ impl Module for YoloV8 {
         let (xs1, xs2, xs3) = self.net.forward(xs)?;
         let (xs1, xs2, xs3) = self.fpn.forward(&xs1, &xs2, &xs3)?;
         Ok(self.head.forward(&xs1, &xs2, &xs3)?.pred)
-    }
-}
-
-#[derive(Debug)]
-pub struct YoloV8Pose {
-    net: DarkNet,
-    fpn: YoloV8Neck,
-    head: PoseHead,
-    span: tracing::Span,
-}
-
-impl YoloV8Pose {
-    pub fn load(
-        vb: VarBuilder,
-        m: Multiples,
-        num_classes: usize,
-        kpt: (usize, usize),
-    ) -> Result<Self> {
-        let net = DarkNet::load(vb.pp("net"), m)?;
-        let fpn = YoloV8Neck::load(vb.pp("fpn"), m)?;
-        let head = PoseHead::load(vb.pp("head"), num_classes, kpt, m.filters())?;
-        Ok(Self {
-            net,
-            fpn,
-            head,
-            span: tracing::span!(tracing::Level::TRACE, "yolo-v8-pose"),
-        })
-    }
-}
-
-impl Module for YoloV8Pose {
-    fn forward(&self, xs: &Tensor) -> Result<Tensor> {
-        let _enter = self.span.enter();
-        let (xs1, xs2, xs3) = self.net.forward(xs)?;
-        let (xs1, xs2, xs3) = self.fpn.forward(&xs1, &xs2, &xs3)?;
-        self.head.forward(&xs1, &xs2, &xs3)
     }
 }

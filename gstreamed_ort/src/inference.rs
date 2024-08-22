@@ -6,30 +6,30 @@ use gstreamed_common::{
     img_dimensions::ImgDimensions,
 };
 use image::{DynamicImage, GenericImageView, RgbImage};
-use ndarray::{Array, Array4, CowArray, Dimension};
+use ndarray::{Array, Array4, CowArray};
 use similari::prelude::{Sort, Universal2DBox};
 
 use crate::yolo_parser::parse_predictions;
 
 // FIXME this function does not quite work right, I think...
-/// Creates a new image from the given [Array].
-/// It is assumed that the array contains a single image.
-fn image_from_ndarray<D: Dimension>(
-    array: Array<f32, D>,
-    width: u32,
-    height: u32,
-) -> Option<RgbImage> {
-    RgbImage::from_vec(
-        width,
-        height,
-        // Unnormalize back to rgb values.
-        array
-            .into_raw_vec()
-            .into_iter()
-            .map(|v| (v * 255.0) as u8)
-            .collect(),
-    )
-}
+// /// Creates a new image from the given [Array].
+// /// It is assumed that the array contains a single image.
+// fn image_from_ndarray<D: Dimension>(
+//     array: Array<f32, D>,
+//     width: u32,
+//     height: u32,
+// ) -> Option<RgbImage> {
+//     RgbImage::from_vec(
+//         width,
+//         height,
+//         // Unnormalize back to rgb values.
+//         array
+//             .into_raw_vec()
+//             .into_iter()
+//             .map(|v| (v * 255.0) as u8)
+//             .collect(),
+//     )
+// }
 
 /// Transforms the input `image` by converting colors, resizing and loading the image buffer into an [Array].
 ///

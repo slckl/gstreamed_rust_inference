@@ -62,11 +62,11 @@ pub fn process_buffer(
 }
 
 /// Performs inference on a video file, using a gstreamer pipeline + ort.
-pub fn process_video(path: &Path, session: Session) -> anyhow::Result<()> {
+pub fn process_video(input: &Path, live_playback: bool, session: Session) -> anyhow::Result<()> {
     gst::init()?;
 
     // First, find out resolution of input file.
-    let file_info = discovery::discover(path)?;
+    let file_info = discovery::discover(input)?;
     log::info!("File info: {file_info:?}");
     let frame_dims = ImgDimensions::new(file_info.width as f32, file_info.height as f32);
 
@@ -83,7 +83,7 @@ pub fn process_video(path: &Path, session: Session) -> anyhow::Result<()> {
     ));
 
     // Build gst pipeline, which performs inference using the loaded model.
-    let pipeline = build_pipeline(path.to_str().unwrap(), move |buf| {
+    let pipeline = build_pipeline(input.to_str().unwrap(), live_playback, move |buf| {
         process_buffer(frame_dims, &session, &tracker, buf);
     })?;
 

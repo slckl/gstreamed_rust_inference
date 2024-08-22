@@ -53,7 +53,7 @@ fn main() -> anyhow::Result<()> {
     // TODO pipe gst logs to some rust log handler
 
     // Build gst pipeline, which performs inference using the loaded model.
-    let pipeline = build_pipeline(args.input.to_str().unwrap(), move |buf| {
+    let pipeline = build_pipeline(args.input.to_str().unwrap(), false, move |buf| {
         inference::process_buffer(frame_dims, &model, &device, buf);
     })?;
 

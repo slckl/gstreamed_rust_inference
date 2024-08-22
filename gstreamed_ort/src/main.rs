@@ -20,6 +20,9 @@ pub struct Args {
     /// Yolov8 onnx model file to use.
     #[arg(long, short, default_value = "_models/yolov8s.onnx")]
     model: String,
+    /// Whether to live playback the inference results.
+    #[arg(long, action, default_value = "false")]
+    live: bool,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -41,7 +44,7 @@ fn main() -> anyhow::Result<()> {
         CPUExecutionProvider::default().build()
     };
     // TODO test trt exec provider, but requires a rebuild of onnxruntime with trt enabled
-    // TODO warmup with synthetic image of the same dims
+    // TODO warmup with synthetic image of the same dims?
 
     ort::init().with_execution_providers([ep]).commit()?;
 
@@ -53,7 +56,7 @@ fn main() -> anyhow::Result<()> {
     log::debug!("session: {session:?}");
 
     match args.input.extension().and_then(|os_str| os_str.to_str()) {
-        Some("mp4" | "mkv") => process_video::process_video(&args.input, session)?,
+        Some("mp4" | "mkv") => process_video::process_video(&args.input, args.live, session)?,
         Some("jpeg" | "jpg" | "png") => process_image::process_image(&args.input, &session)?,
         Some(unk) => log::error!("Unhandled file extension: {unk}"),
         None => log::error!(
