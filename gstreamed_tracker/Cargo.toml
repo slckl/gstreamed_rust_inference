@@ -10,7 +10,5 @@ edition = "2021"
 gstreamed_common = { path = "../gstreamed_common" }
 # ext
 anyhow = { version = "1.0.75", features = ["backtrace"] }
-gstreamer.workspace = true
-image.workspace = true
-imageproc.workspace = true
 log = "0.4.22"
+similari-trackers-rs = { version = "0.26.11" }

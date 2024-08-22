@@ -1090,13 +1090,13 @@ dependencies = [
  "clap",
  "fast_image_resize",
  "gstreamed_common",
+ "gstreamed_tracker",
  "gstreamer",
  "image",
  "imageproc",
  "log",
  "ndarray",
  "ort",
- "similari-trackers-rs",
  "tracing",
  "tracing-subscriber",
 ]
@@ -1107,10 +1107,8 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "gstreamed_common",
- "gstreamer",
- "image",
- "imageproc",
  "log",
+ "similari-trackers-rs",
 ]
 
 [[package]]

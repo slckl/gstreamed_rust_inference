@@ -5,14 +5,11 @@ use std::time::Instant;
 
 use gstreamed_common::frame_times::FrameTimes;
 use gstreamed_common::{discovery, img_dimensions::ImgDimensions, pipeline::build_pipeline};
+use gstreamed_tracker::similari::prelude::Sort;
 use gstreamer::{self as gst};
 use gstreamer::{prelude::*, MessageView};
 use image::{DynamicImage, RgbImage};
 use ort::Session;
-use similari::prelude::PositionalMetricType::IoU;
-use similari::prelude::Sort;
-use similari::trackers::sort::metric::DEFAULT_MINIMAL_SORT_CONFIDENCE;
-use similari::trackers::sort::DEFAULT_SORT_IOU_THRESHOLD;
 
 use crate::inference;
 
@@ -74,16 +71,7 @@ pub fn process_video(input: &Path, live_playback: bool, session: Session) -> any
     let frame_dims = ImgDimensions::new(file_info.width as f32, file_info.height as f32);
 
     // Configure tracker, we use similari library, which provides iou/sort trackers.
-    let tracker = Mutex::new(Sort::new(
-        1,
-        10,
-        10,
-        IoU(DEFAULT_SORT_IOU_THRESHOLD),
-        DEFAULT_MINIMAL_SORT_CONFIDENCE,
-        None,
-        1.0 / 20.0,
-        1.0 / 160.0,
-    ));
+    let tracker = gstreamed_tracker::sort_tracker();
 
     // Build gst pipeline, which performs inference using the loaded model.
     let pipeline = build_pipeline(input.to_str().unwrap(), live_playback, move |buf| {

@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 # workspace
 gstreamed_common.workspace = true
+gstreamed_tracker.workspace = true
 # ext
 anyhow = { version = "1.0.75", features = ["backtrace"] }
 clap = { version = "4.4.3", features = ["derive"] }
@@ -18,6 +19,5 @@ imageproc.workspace = true
 log = "0.4.22"
 ndarray = { version = "0.16.1" }
 ort = { version = "2.0.0-rc.5", default-features = false, features = ["ndarray", "download-binaries", "copy-dylibs", "cuda"] }
-similari-trackers-rs = { version = "0.26.11" }
 tracing = { version = "0.1.40" }
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }

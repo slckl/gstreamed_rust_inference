@@ -1,6 +1,11 @@
 [workspace]
 resolver = "2"
-members = ["gstreamed_candle", "gstreamed_common", "gstreamed_tracker", "gstreamed_ort"]
+members = [
+    "gstreamed_candle",
+    "gstreamed_common",
+    "gstreamed_tracker",
+    "gstreamed_ort",
+]
 
 [workspace.dependencies]
 # internal dependencies
