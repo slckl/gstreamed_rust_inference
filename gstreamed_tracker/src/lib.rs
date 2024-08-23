@@ -53,8 +53,11 @@ pub fn tracks_to_bboxes(tracks: &[SortTrack], scaled_dims: ImgDimensions) -> Vec
             ymin: ymin.max(0.0f32).min(scaled_dims.height),
             xmax: xmax.max(0.0f32).min(scaled_dims.width),
             ymax: ymax.max(0.0f32).min(scaled_dims.height),
-            // FIXME tracker confidence is always very high
-            confidence: tracked_bbox.confidence,
+            // FIXME this, unfortunately, does not retain og yolo confidence...
+            detector_confidence: track.observed_bbox.confidence,
+            // FIXME tracker confidence is always very high?
+            //  does it not work for sort?
+            tracker_confidence: tracked_bbox.confidence,
             data: vec![],
             class: class_id as usize,
             tracker_id: Some(id as i64),

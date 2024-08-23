@@ -11,26 +11,6 @@ use ndarray::{Array, Array4, CowArray};
 
 use crate::yolo_parser::parse_predictions;
 
-// FIXME this function does not quite work right, I think...
-// /// Creates a new image from the given [Array].
-// /// It is assumed that the array contains a single image.
-// fn image_from_ndarray<D: Dimension>(
-//     array: Array<f32, D>,
-//     width: u32,
-//     height: u32,
-// ) -> Option<RgbImage> {
-//     RgbImage::from_vec(
-//         width,
-//         height,
-//         // Unnormalize back to rgb values.
-//         array
-//             .into_raw_vec()
-//             .into_iter()
-//             .map(|v| (v * 255.0) as u8)
-//             .collect(),
-//     )
-// }
-
 /// Transforms the input `image` by converting colors, resizing and loading the image buffer into an [Array].
 ///
 /// Returns the scaled image inside ndarray [Array4] and scaled dims inside [ImgDimensions].
@@ -175,7 +155,6 @@ pub fn infer_on_image(
     let legend_size = 14;
 
     // Map tracked bboxes back to per class bbox vec...
-
     let bboxes = match tracked_bboxes {
         Some(tracked) => unflatten_bboxes(tracked),
         None => bboxes,

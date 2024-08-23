@@ -40,10 +40,11 @@ pub fn annotate_image_with_bboxes(
                         image::Rgb([170, 0, 0]),
                     );
                     let legend = format!(
-                        "{} {:?}   {:.0}%",
+                        "{} {:?}   {:.0}% {:.0}%",
                         coco_classes::NAMES[class_index],
                         b.tracker_id,
-                        100. * b.confidence
+                        100. * b.detector_confidence,
+                        100. * b.tracker_confidence,
                     );
                     imageproc::drawing::draw_text_mut(
                         &mut img,

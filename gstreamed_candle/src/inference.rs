@@ -3,6 +3,7 @@
 
 use std::io::Write;
 use std::path::PathBuf;
+use std::sync::Mutex;
 use std::time::Instant;
 
 use candle_core::{DType, Device, IndexOp, Module, Tensor};
@@ -11,6 +12,8 @@ use clap::ValueEnum;
 use gstreamed_common::bbox::{non_maximum_suppression, Bbox};
 use gstreamed_common::img_dimensions::ImgDimensions;
 use gstreamed_common::{annotate::annotate_image_with_bboxes, frame_times::FrameTimes};
+use gstreamed_tracker::similari::prelude::Sort;
+use gstreamed_tracker::unflatten_bboxes;
 use gstreamer as gst;
 use image::{DynamicImage, RgbImage};
 
@@ -58,15 +61,12 @@ pub fn load_model(which: Which, device: &Device) -> anyhow::Result<YoloV8> {
     Ok(model)
 }
 
-fn report_detect(
+fn post_process_preds(
     pred: &Tensor,
-    og_img: DynamicImage,
-    scaled_dims: ImgDimensions,
     confidence_threshold: f32,
     nms_threshold: f32,
-    legend_size: u32,
     frame_times: &mut FrameTimes,
-) -> anyhow::Result<DynamicImage> {
+) -> anyhow::Result<Vec<Vec<Bbox>>> {
     // println!("initial pred.shape: {:?}", pred.shape());
     let start = Instant::now();
     let (pred_size, npreds) = pred.dims2()?;
@@ -96,7 +96,8 @@ fn report_detect(
                     ymin: pred[1] - pred[3] / 2.,
                     xmax: pred[0] + pred[2] / 2.,
                     ymax: pred[1] + pred[3] / 2.,
-                    confidence,
+                    detector_confidence: confidence,
+                    tracker_confidence: 0f32,
                     data: vec![],
                     class: class_index,
                     tracker_id: None,
@@ -110,28 +111,18 @@ fn report_detect(
     let start = Instant::now();
     non_maximum_suppression(&mut bboxes, nms_threshold);
     frame_times.nms = start.elapsed();
-
-    // Annotate the original image and print boxes information.
-    let start = Instant::now();
-    let annotated = annotate_image_with_bboxes(
-        og_img,
-        scaled_dims.width as usize,
-        scaled_dims.height as usize,
-        legend_size,
-        &bboxes,
-    );
-    frame_times.annotation = start.elapsed();
-
-    Ok(annotated)
+    Ok(bboxes)
 }
 
 /// Run yolov8 inference, and draw detections on top of the frame.
 ///
 /// Largely copypasta of report_detect in candle yolov8 example code.
+#[allow(clippy::too_many_arguments)]
 pub fn process_frame(
     frame: DynamicImage,
     model: &YoloV8,
     device: &Device,
+    tracker: &mut Sort,
     conf_thresh: f32,
     nms_thresh: f32,
     legend_size: u32,
@@ -173,31 +164,43 @@ pub fn process_frame(
     let predictions = model.forward(&image_t)?.squeeze(0)?;
     frame_times.forward_pass = start.elapsed();
 
-    // Process predictions and draw overlays.
-    let image_t = report_detect(
-        &predictions,
-        frame,
+    // Postprocess predictions into bboxes.
+    let bboxes_per_class = post_process_preds(&predictions, conf_thresh, nms_thresh, frame_times)?;
+
+    // Track bboxes.
+    let start = Instant::now();
+    let tracked_bboxes = gstreamed_tracker::predict_tracked_bboxes(
+        tracker,
         ImgDimensions::new(scaled_width as f32, scaled_height as f32),
-        conf_thresh,
-        nms_thresh,
+        &bboxes_per_class,
+    );
+    frame_times.tracking = start.elapsed();
+
+    // Unflatten tracked bboxes back into bboxes per class.
+    let bboxes_per_class = unflatten_bboxes(tracked_bboxes);
+
+    // Annotate the original image and print boxes information.
+    let start = Instant::now();
+    let annotated = annotate_image_with_bboxes(
+        frame,
+        scaled_width,
+        scaled_height,
         legend_size,
-        frame_times,
-    )?;
+        &bboxes_per_class,
+    );
+    frame_times.annotation = start.elapsed();
 
     // Return processed image tensor.
-    Ok(image_t)
+    Ok(annotated)
 }
 
 pub fn process_buffer(
     frame_dims: ImgDimensions,
     model: &YoloV8,
     device: &Device,
+    tracker: &Mutex<Sort>,
     buffer: &mut gst::Buffer,
 ) {
-    // let file_info = &self.file_info;
-    // let model = &self.model;
-    // let device = &self.device;
-
     let mut frame_times = FrameTimes::default();
 
     let start = Instant::now();
@@ -213,20 +216,25 @@ pub fn process_buffer(
             readable_vec,
         )
         .unwrap();
-        // debug code
-        // image.save("./output.jpg").unwrap();
-        // std::process::exit(0);
         DynamicImage::ImageRgb8(image)
     };
     frame_times.frame_to_buffer = start.elapsed();
 
     // process it using some model + draw overlays on the output image
-    let processed = process_frame(image, model, device, 0.25, 0.45, 14, &mut frame_times).unwrap();
+    let mut tracker = tracker.lock().unwrap();
+    let processed = process_frame(
+        image,
+        model,
+        device,
+        &mut tracker,
+        0.25,
+        0.45,
+        14,
+        &mut frame_times,
+    )
+    .unwrap();
 
-    // processed.save("./output.jpg").unwrap();
-    // std::process::exit(0);
-
-    // overwrite the buffer with our overlaid processed image
+    // Overwrite the buffer with our overlaid processed image.
     let start = Instant::now();
     let buffer_mut = buffer.get_mut().unwrap();
     let mut writable = buffer_mut.map_writable().unwrap();

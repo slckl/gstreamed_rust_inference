@@ -7,7 +7,8 @@ pub struct Bbox {
     pub ymin: f32,
     pub xmax: f32,
     pub ymax: f32,
-    pub confidence: f32,
+    pub detector_confidence: f32,
+    pub tracker_confidence: f32,
     pub data: Vec<KeyPoint>,
     pub class: usize,
     pub tracker_id: Option<i64>,
@@ -35,7 +36,11 @@ pub fn iou(b1: &Bbox, b2: &Bbox) -> f32 {
 pub fn non_maximum_suppression(bboxes: &mut [Vec<Bbox>], threshold: f32) {
     // Perform non-maximum suppression.
     for bboxes_for_class in bboxes.iter_mut() {
-        bboxes_for_class.sort_by(|b1, b2| b2.confidence.partial_cmp(&b1.confidence).unwrap());
+        bboxes_for_class.sort_by(|b1, b2| {
+            b2.detector_confidence
+                .partial_cmp(&b1.detector_confidence)
+                .unwrap()
+        });
         let mut current_index = 0;
         for index in 0..bboxes_for_class.len() {
             let mut drop = false;

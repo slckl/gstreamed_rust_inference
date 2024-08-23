@@ -52,9 +52,12 @@ fn main() -> anyhow::Result<()> {
     let model = inference::load_model(which, &device)?;
     // TODO pipe gst logs to some rust log handler
 
+    // Use tracker for candle pipeline, too.
+    let tracker = gstreamed_tracker::sort_tracker();
+
     // Build gst pipeline, which performs inference using the loaded model.
     let pipeline = build_pipeline(args.input.to_str().unwrap(), false, move |buf| {
-        inference::process_buffer(frame_dims, &model, &device, buf);
+        inference::process_buffer(frame_dims, &model, &device, &tracker, buf);
     })?;
 
     // Make it play and listen to events to know when it's done.
