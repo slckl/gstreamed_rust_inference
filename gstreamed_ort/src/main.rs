@@ -30,7 +30,7 @@ fn main() -> anyhow::Result<()> {
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "debug".into()),
+                .unwrap_or_else(|_| "warn,gstreamed_ort=info".into()),
         )
         .with(tracing_subscriber::fmt::layer())
         .init();
@@ -38,10 +38,10 @@ fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
     // Load model into ort.
-    let ep = if args.cuda {
-        CUDAExecutionProvider::default().build()
+    let (ep, ep_name) = if args.cuda {
+        (CUDAExecutionProvider::default().build(), "cuda")
     } else {
-        CPUExecutionProvider::default().build()
+        (CPUExecutionProvider::default().build(), "cpu")
     };
     // TODO test trt exec provider, but requires a rebuild of onnxruntime with trt enabled
     // TODO warmup with synthetic image of the same dims?
@@ -51,9 +51,13 @@ fn main() -> anyhow::Result<()> {
     let session = SessionBuilder::new()?
         .with_optimization_level(GraphOptimizationLevel::Level3)?
         // .with_intra_threads(1)?
-        .commit_from_file(args.model)?;
-    // .with_model_from_file(args.model)?;
-    log::debug!("session: {session:?}");
+        .commit_from_file(&args.model)?;
+    log::debug!("{session:?}");
+
+    log::info!(
+        "Prepared ort {ep_name} session with model: {:?}",
+        args.model
+    );
 
     match args.input.extension().and_then(|os_str| os_str.to_str()) {
         Some("mp4" | "mkv") => process_video::process_video(&args.input, args.live, session)?,

@@ -44,8 +44,9 @@ Models can be downloaded and exported by
 1. Installing ultralytics cli: `pip install ultralytics`
 2. Using cli to export the download & export the desired model: `yolo export model=yolov8m.pt format=onnx simplify dynamic`
 
-### Onnx runtime
+## Performance
 
-`ort` supports downloading pre-built onnxruntime binaries, if your arch supports it, but it can be tricky.
+Currently, with yolov8 `ort` seems to be considerably faster than `candle`.
 
-TODO description of download vs system onnxruntime features
+On cpu:
+// TODO compute frame time statistics per run

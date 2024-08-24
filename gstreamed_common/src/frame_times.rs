@@ -100,6 +100,7 @@ impl AggregatedTimes {
         self.0.push(frame_times);
     }
 
+    /// Computes
     pub fn avg(&self, ignore_first: bool) -> FrameTimes {
         let sum: FrameTimes = self
             .0

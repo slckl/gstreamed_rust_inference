@@ -1,9 +1,9 @@
 use std::io::Write;
 use std::path::Path;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
-use gstreamed_common::frame_times::FrameTimes;
+use gstreamed_common::frame_times::{AggregatedTimes, FrameTimes};
 use gstreamed_common::{discovery, img_dimensions::ImgDimensions, pipeline::build_pipeline};
 use gstreamed_tracker::similari::prelude::Sort;
 use gstreamer::{self as gst};
@@ -18,6 +18,7 @@ pub fn process_buffer(
     session: &Session,
     // TODO make tracking optional
     tracker: &Mutex<Sort>,
+    agg_times: &mut AggregatedTimes,
     buffer: &mut gst::Buffer,
 ) {
     let mut frame_times = FrameTimes::default();
@@ -53,24 +54,31 @@ pub fn process_buffer(
     frame_times.buffer_to_frame = start.elapsed();
 
     log::debug!("{frame_times:?}");
+    agg_times.push(frame_times);
 }
 
 /// Performs inference on a video file, using a gstreamer pipeline + ort.
 pub fn process_video(input: &Path, live_playback: bool, session: Session) -> anyhow::Result<()> {
     gst::init()?;
 
+    let agg_times = Arc::new(Mutex::new(AggregatedTimes::default()));
+
     // First, find out resolution of input file.
+    log::info!("Discovering media properties of {input:?}");
     let file_info = discovery::discover(input)?;
-    log::info!("File info: {file_info:?}");
+    log::info!("{file_info:?}");
     let frame_dims = ImgDimensions::new(file_info.width as f32, file_info.height as f32);
 
     // Configure tracker, we use similari library, which provides iou/sort trackers.
     let tracker = gstreamed_tracker::sort_tracker();
 
     // Build gst pipeline, which performs inference using the loaded model.
+    let scoped_agg = Arc::clone(&agg_times);
     let pipeline = build_pipeline(input.to_str().unwrap(), live_playback, move |buf| {
-        process_buffer(frame_dims, &session, &tracker, buf);
+        let mut agg_times = scoped_agg.lock().unwrap();
+        process_buffer(frame_dims, &session, &tracker, &mut agg_times, buf);
     })?;
+    log::info!("Starting gst pipeline");
 
     // Make it play and listen to events to know when it's done.
     pipeline.set_state(gst::State::Playing).unwrap();
@@ -93,5 +101,17 @@ pub fn process_video(input: &Path, live_playback: bool, session: Session) -> any
     }
 
     pipeline.set_state(gst::State::Null).unwrap();
+
+    // Print perf stats, ignoring first (outlier) frame.
+    let agg = agg_times.lock().unwrap();
+    let avg = agg.avg(true);
+    log::info!("Average frame times: {avg:?}");
+
+    let min = agg.min(true);
+    log::info!("Min frame times: {min:?}");
+
+    let max = agg.max(true);
+    log::info!("Max frame times: {max:?}");
+
     Ok(())
 }
