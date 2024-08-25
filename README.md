@@ -10,6 +10,8 @@ There are 2 main examples currently:
 
 Only object detection has been implemented here, there is no support for segmentation or pose estimation yet.
 
+Both examples also support basic object tracking via SORT tracker from [similari](https://github.com/insight-platform/Similari).
+
 ## gstreamed_candle
 
 This is a largely adapted yolov8 example from candle examples, using the same model, just adapted to run inside a gstreamer pipeline. Models are downloaded from huggingface hub, from candle example models.
