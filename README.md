@@ -19,6 +19,8 @@ Run from workspace directory as follows:
 cargo run -r -p gstreamed_candle -- <INPUT> 
 ```
 
+This will process the `<INPUT>` video file and save the processed output in `<INPUT>.out.mkv` video file.
+
 Additional CLI options:
 - `--cuda` - launches candle pipeline with cuda
 
@@ -30,6 +32,9 @@ Run from workspace directory as follows:
 ```shell
 cargo run -r -p gstreamed_ort -- <INPUT>
 ```
+In case of video files, this will process the `<INPUT>` video file and save the processed output in `<INPUT>.out.mkv` video file.
+
+In case of image files, this will output `<INPUT>.out.jpg`.
 
 Additional CLI options:
 - `--cuda` - launches ort pipeline with cuda, may fail silently, watch your logs.
