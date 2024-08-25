@@ -4,13 +4,13 @@ This repo contains a few experimental examples for running a computer vision pip
 
 [gstreamer](https://gitlab.freedesktop.org/gstreamer/gstreamer-rs) is used for video decoding/encoding and display, while inference is run either via [candle](https://github.com/huggingface/candle) or [ort](https://github.com/pykeio/ort).
 
+We also implement basic object tracking via SORT tracker, via [similari](https://github.com/insight-platform/Similari).
+
 There are 2 main examples currently:
 - `gstreamed_candle` - runs yolov8 on image or video input using `candle` library.
 - `gstreamed_ort` - runs yolov8 on image or video input using onnxruntime via `ort` library.
 
 Only object detection has been implemented here, there is no support for segmentation or pose estimation yet.
-
-Both examples also support basic object tracking via SORT tracker from [similari](https://github.com/insight-platform/Similari).
 
 ## gstreamed_candle
 
