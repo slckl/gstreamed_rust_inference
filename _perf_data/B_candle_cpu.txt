@@ -1,0 +1,35 @@
+Average frame times: 
+            total: 619.463471ms,
+            frame_to_buffer: 382.747µs,
+            buffer_resize: 15.425488ms,
+            buffer_to_tensor: 3.132736ms,
+            forward_pass: 589.976248ms,
+            bbox_extraction: 7.546485ms,
+            nms: 13.003µs,
+            tracking: 456.222µs,
+            annotation: 977.197µs,
+            buffer_to_frame: 1.553345ms
+                
+Min frame times: 
+            total: 526.996452ms,
+            frame_to_buffer: 214.503µs,
+            buffer_resize: 8.672997ms,
+            buffer_to_tensor: 2.51851ms,
+            forward_pass: 508.318788ms,
+            bbox_extraction: 5.724301ms,
+            nms: 1.935µs,
+            tracking: 122.495µs,
+            annotation: 184.551µs,
+            buffer_to_frame: 1.238372ms
+                
+Max frame times: 
+            total: 756.438156ms,
+            frame_to_buffer: 905.872µs,
+            buffer_resize: 30.733975ms,
+            buffer_to_tensor: 7.606329ms,
+            forward_pass: 697.313981ms,
+            bbox_extraction: 11.273756ms,
+            nms: 58.396µs,
+            tracking: 1.587506ms,
+            annotation: 3.443982ms,
+            buffer_to_frame: 3.514359ms

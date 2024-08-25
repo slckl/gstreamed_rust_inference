@@ -57,7 +57,9 @@ These benchmarks are very much not scientific, but do show practical difference.
 
 Running inference on the same 1280x720 30 fps file, using yolov8s model, average times.
 
-CPU is Ryzen 5900x, GPU is RTX 3070.
+Data used for the comparison can be found in the `_perf_data` directory.
+
+### Machine A: AMD Ryzen 5900x, RTX 3070.
 
 | Library | Executor | Buffer to tensor | Forward pass | Postprocess (tensor 2 data) |
 | ------- | -------- | ---------------- | ------------ | --------------------------- |
@@ -66,4 +68,11 @@ CPU is Ryzen 5900x, GPU is RTX 3070.
 | Candle  | CUDA     | 0.09 ms          | 21.76 ms     | 3.39 ms                     |
 | ORT     | CUDA     | 0.78 ms          | 5.53 ms      | 0.68 ms                     |
 
-Data used for the comparison can be found in the `_perf_data` directory.
+### Machine B: Intel 12700H, RTX A2000
+
+| Library | Executor | Buffer to tensor | Forward pass | Postprocess (tensor 2 data) |
+| ------- | -------- | ---------------- | ------------ | --------------------------- |
+| Candle  | CPU      | 3.13 ms          | 589.98 ms    | 7.55 ms                     |
+| ORT     | CPU      | 1.85 ms          | 86.67 ms     | 1.33 ms                     |
+| Candle  | CUDA     | 0.16 ms          | 38.92 ms     | 6.22 ms                     |
+| ORT     | CUDA     | 1.37 ms          | 10.06 ms     | 1.20 ms                     |
