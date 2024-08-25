@@ -48,6 +48,17 @@ Models can be downloaded and exported by
 
 Currently, with yolov8 `ort` seems to be considerably faster than `candle`.
 
+These benchmarks are very much not scientific, but do show practical difference.
 
-On cpu:
-// TODO compute frame time statistics per run
+Running inference on the same 1280x720 30 fps file, using yolov8s model, average times.
+
+CPU is Ryzen 5900x, GPU is RTX 3070.
+
+| Library | Executor | Buffer to tensor | Forward pass | Postprocess (tensor 2 data) |
+| ------- | -------- | ---------------- | ------------ | --------------------------- |
+| Candle  | CPU      | 1.14 ms          | 298.64 ms    | 2.63 ms                     |
+| ORT     | CPU      | 0.75 ms          | 80.91 ms     | 0.87 ms                     |
+| Candle  | CUDA     | 0.09 ms          | 21.76 ms     | 3.39 ms                     |
+| ORT     | CUDA     | 0.78 ms          | 5.53 ms      | 0.68 ms                     |
+
+Data used for the comparison can be found in the `_perf_data` directory.

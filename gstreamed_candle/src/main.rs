@@ -41,7 +41,7 @@ fn main() -> anyhow::Result<()> {
 
     // First, find out resolution of input file.
     let file_info = discovery::discover(&args.input)?;
-    log::info!("File info: {file_info:?}");
+    log::info!("{file_info:?}");
     let frame_dims = ImgDimensions::new(file_info.width as f32, file_info.height as f32);
 
     let device = if args.cuda {
@@ -79,7 +79,7 @@ fn main() -> anyhow::Result<()> {
                 break;
             }
             MessageView::Eos(..) => {
-                log::error!("Pipeline reached end of stream.");
+                log::info!("Pipeline reached end of stream.");
                 break;
             }
             _ => (),
