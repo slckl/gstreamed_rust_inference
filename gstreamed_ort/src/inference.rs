@@ -73,9 +73,8 @@ fn preprocess_image(
         target_dims.width as usize,
     ];
     let mut image_array = Array::zeros(target_shape);
-    // Init with gray, similar to how ultralytics does it.
-    image_array.fill(0.5);
-    // Then copy over the pixels starting from the top, leaving the missing parts filled with gray?
+
+    // Copy over the pixels starting from the top
     for (x, y, rgb) in scaled_image.enumerate_pixels() {
         let x = x as usize;
         let y = y as usize;
