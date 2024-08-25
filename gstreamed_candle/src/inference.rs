@@ -10,6 +10,7 @@ use candle_core::{DType, Device, IndexOp, Module, Tensor};
 use candle_nn::VarBuilder;
 use clap::ValueEnum;
 use gstreamed_common::bbox::{non_maximum_suppression, Bbox};
+use gstreamed_common::frame_times::AggregatedTimes;
 use gstreamed_common::img_dimensions::ImgDimensions;
 use gstreamed_common::{annotate::annotate_image_with_bboxes, frame_times::FrameTimes};
 use gstreamed_tracker::similari::prelude::Sort;
@@ -199,6 +200,7 @@ pub fn process_buffer(
     model: &YoloV8,
     device: &Device,
     tracker: &Mutex<Sort>,
+    agg_times: &mut AggregatedTimes,
     buffer: &mut gst::Buffer,
 ) {
     let mut frame_times = FrameTimes::default();
@@ -243,4 +245,5 @@ pub fn process_buffer(
     frame_times.buffer_to_frame = start.elapsed();
 
     log::debug!("{frame_times:?}");
+    agg_times.push(frame_times);
 }

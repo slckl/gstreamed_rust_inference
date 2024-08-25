@@ -5,12 +5,15 @@ use crate::inference::Which;
 use candle_core::Device;
 use clap::Parser;
 use gstreamed_common::discovery;
+use gstreamed_common::frame_times::AggregatedTimes;
 use gstreamed_common::img_dimensions::ImgDimensions;
 use gstreamed_common::pipeline::build_pipeline;
 use gstreamer as gst;
 use gstreamer::prelude::*;
 use gstreamer::MessageView;
 use std::path::PathBuf;
+use std::sync::Arc;
+use std::sync::Mutex;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Debug, Parser)]
@@ -50,14 +53,17 @@ fn main() -> anyhow::Result<()> {
     // Load models using hf-hub.
     let which = Which::S;
     let model = inference::load_model(which, &device)?;
-    // TODO pipe gst logs to some rust log handler
+
+    let agg_times = Arc::new(Mutex::new(AggregatedTimes::default()));
 
     // Use tracker for candle pipeline, too.
     let tracker = gstreamed_tracker::sort_tracker();
 
     // Build gst pipeline, which performs inference using the loaded model.
+    let scoped_agg = Arc::clone(&agg_times);
     let pipeline = build_pipeline(args.input.to_str().unwrap(), false, move |buf| {
-        inference::process_buffer(frame_dims, &model, &device, &tracker, buf);
+        let mut agg_times = scoped_agg.lock().unwrap();
+        inference::process_buffer(frame_dims, &model, &device, &tracker, &mut agg_times, buf);
     })?;
 
     // Make it play and listen to events to know when it's done.
@@ -81,6 +87,17 @@ fn main() -> anyhow::Result<()> {
     }
 
     pipeline.set_state(gst::State::Null).unwrap();
+
+    // Print perf stats, ignoring first (outlier) frame.
+    let agg = agg_times.lock().unwrap();
+    let avg = agg.avg(true);
+    log::info!("Average frame times: {avg:?}");
+
+    let min = agg.min(true);
+    log::info!("Min frame times: {min:?}");
+
+    let max = agg.max(true);
+    log::info!("Max frame times: {max:?}");
 
     Ok(())
 }

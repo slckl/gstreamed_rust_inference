@@ -48,5 +48,6 @@ Models can be downloaded and exported by
 
 Currently, with yolov8 `ort` seems to be considerably faster than `candle`.
 
+
 On cpu:
 // TODO compute frame time statistics per run
