@@ -8,6 +8,7 @@ use gstreamed_common::{
 use gstreamed_tracker::{similari::prelude::Sort, unflatten_bboxes};
 use image::{DynamicImage, GenericImageView, RgbImage};
 use ndarray::{Array, Array4, CowArray};
+use ort::session::Session;
 
 use crate::yolo_parser::parse_predictions;
 
@@ -88,7 +89,7 @@ fn preprocess_image(
 }
 
 pub fn infer_on_image(
-    session: &ort::Session,
+    session: &Session,
     tracker: Option<&mut Sort>,
     og_image: DynamicImage,
     frame_times: &mut FrameTimes,

@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use gstreamed_common::frame_times::FrameTimes;
-use ort::Session;
+use ort::session::Session;
 
 use crate::inference;
 

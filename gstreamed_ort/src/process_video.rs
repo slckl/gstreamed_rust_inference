@@ -9,7 +9,7 @@ use gstreamed_tracker::similari::prelude::Sort;
 use gstreamer::{self as gst};
 use gstreamer::{prelude::*, MessageView};
 use image::{DynamicImage, RgbImage};
-use ort::Session;
+use ort::session::Session;
 
 use crate::inference;
 

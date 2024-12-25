@@ -12,12 +12,12 @@ gstreamed_tracker.workspace = true
 # ext
 anyhow = { version = "1.0.75", features = ["backtrace"] }
 clap = { version = "4.4.3", features = ["derive"] }
-fast_image_resize = { version = "4.2.1", features = ["image"] }
+fast_image_resize = { version = "5.1.0", features = ["image"] }
 gstreamer.workspace = true
 image.workspace = true
 imageproc.workspace = true
 log = "0.4.22"
 ndarray = { version = "0.16.1" }
-ort = { version = "2.0.0-rc.5", default-features = false, features = ["ndarray", "download-binaries", "copy-dylibs", "cuda"] }
+ort = { version = "2.0.0-rc.9", default-features = true, features = ["ndarray", "cuda"] }
 tracing = { version = "0.1.40" }
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }

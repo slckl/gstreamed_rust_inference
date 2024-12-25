@@ -6,7 +6,10 @@ mod yolo_parser;
 use std::path::PathBuf;
 
 use clap::Parser;
-use ort::{CPUExecutionProvider, CUDAExecutionProvider, GraphOptimizationLevel, SessionBuilder};
+use ort::execution_providers::CPUExecutionProvider;
+use ort::execution_providers::CUDAExecutionProvider;
+use ort::session::builder::GraphOptimizationLevel;
+use ort::session::builder::SessionBuilder;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Debug, Parser)]
