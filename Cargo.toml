@@ -4,7 +4,8 @@ members = [
     "gstreamed_candle",
     "gstreamed_common",
     "gstreamed_tracker",
-    "gstreamed_ort",
+    "gstreamed_ort", 
+    "into_rerun",
 ]
 
 [workspace.dependencies]
