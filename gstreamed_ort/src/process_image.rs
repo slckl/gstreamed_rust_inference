@@ -13,13 +13,16 @@ pub fn process_image(path: &Path, session: &Session) -> anyhow::Result<()> {
     let og_image = image::open(path)?;
 
     // Process image.
-    let img = inference::infer_on_image(session, None, og_image.clone(), &mut frame_times)?;
+    let (img, _bboxes) =
+        inference::infer_on_image(session, None, og_image.clone(), &mut frame_times)?;
     // NB! For a single image, ort times will be misleading,
     // as the first time it's used, it does all kinds of lazy init.
     log::debug!("{frame_times:?}");
-    // Save output.
-    let output_path = path.with_extension("out.jpg");
-    img.save(output_path)?;
+    // Save output: image & bboxes.
+    let img_output_path = path.with_extension("out.jpg");
+    img.save(img_output_path)?;
+    let bbox_output_path = path.with_extension("bboxes.json");
+    serde_json::to_writer(std::fs::File::create(bbox_output_path)?, &_bboxes)?;
 
     Ok(())
 }

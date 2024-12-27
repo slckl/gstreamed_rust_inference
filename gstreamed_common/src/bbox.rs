@@ -1,7 +1,7 @@
 //! Lifted wholesale from candle-transformers to avoid candle-transformers dependency for ort version.
 
 /// A bounding box around an object.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub struct Bbox {
     pub xmin: f32,
     pub ymin: f32,
@@ -14,7 +14,7 @@ pub struct Bbox {
     pub tracker_id: Option<i64>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize)]
 pub struct KeyPoint {
     pub x: f32,
     pub y: f32,

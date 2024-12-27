@@ -8,9 +8,10 @@ edition = "2021"
 [dependencies]
 ab_glyph = { version = "0.2.28" }
 anyhow = { version = "1.0.75", features = ["backtrace"] }
-gstreamer = { version = "0.23.0" }
-gstreamer-pbutils = { version = "0.23.0" }
-gstreamer-video = { version = "0.23.0" }
+gstreamer.workspace = true
+gstreamer-pbutils = { version = "0.23.4" }
+gstreamer-video = { version = "0.23.4" }
 image.workspace = true
 imageproc.workspace = true
 log = "0.4.22"
+serde = { version = "1.0.216", features = ["derive"] }

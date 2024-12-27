@@ -99,9 +99,13 @@ pub fn predict_tracked_bboxes(
     tracks_to_bboxes(&tracks, scaled_dims)
 }
 
-// TODO introduce proper type for Vec<Vec<Bbox>>...
+/// Type alias for a list of bboxes grouped by class.
+pub type BBoxesByClass = Vec<Vec<Bbox>>;
+
 /// Transform a flat list of [Bbox] back into bboxes grouped by class.
-pub fn unflatten_bboxes(flat_bboxes: Vec<Bbox>) -> Vec<Vec<Bbox>> {
+///
+/// NB! Currently hardcoded to use coco classes.
+pub fn unflatten_bboxes(flat_bboxes: Vec<Bbox>) -> BBoxesByClass {
     let mut bboxes_by_class = vec![Vec::new(); coco_classes::NAMES.len()];
     for tracked_bbox in flat_bboxes {
         bboxes_by_class[tracked_bbox.class].push(tracked_bbox);

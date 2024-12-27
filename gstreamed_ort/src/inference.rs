@@ -5,7 +5,7 @@ use gstreamed_common::{
     annotate::annotate_image_with_bboxes, bbox::Bbox, coco_classes, frame_times::FrameTimes,
     img_dimensions::ImgDimensions,
 };
-use gstreamed_tracker::{similari::prelude::Sort, unflatten_bboxes};
+use gstreamed_tracker::{similari::prelude::Sort, unflatten_bboxes, BBoxesByClass};
 use image::{DynamicImage, GenericImageView, RgbImage};
 use ndarray::{Array, Array4, CowArray};
 use ort::session::Session;
@@ -93,7 +93,7 @@ pub fn infer_on_image(
     tracker: Option<&mut Sort>,
     og_image: DynamicImage,
     frame_times: &mut FrameTimes,
-) -> anyhow::Result<DynamicImage> {
+) -> anyhow::Result<(DynamicImage, BBoxesByClass)> {
     // FIXME determine target_dims based on model?
     let model_input_dims = ImgDimensions::new(640f32, 384f32);
 
@@ -169,5 +169,5 @@ pub fn infer_on_image(
     );
     frame_times.annotation = start.elapsed();
 
-    Ok(annotated)
+    Ok((annotated, bboxes))
 }

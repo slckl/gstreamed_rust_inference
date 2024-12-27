@@ -6,6 +6,7 @@ use std::time::Instant;
 use gstreamed_common::frame_times::{AggregatedTimes, FrameTimes};
 use gstreamed_common::{discovery, img_dimensions::ImgDimensions, pipeline::build_pipeline};
 use gstreamed_tracker::similari::prelude::Sort;
+use gstreamed_tracker::BBoxesByClass;
 use gstreamer::{self as gst};
 use gstreamer::{prelude::*, MessageView};
 use image::{DynamicImage, RgbImage};
@@ -19,6 +20,7 @@ pub fn process_buffer(
     // TODO make tracking optional
     tracker: &Mutex<Sort>,
     agg_times: &mut AggregatedTimes,
+    bboxes_by_frames: &mut Vec<BBoxesByClass>,
     buffer: &mut gst::Buffer,
 ) {
     let mut frame_times = FrameTimes::default();
@@ -42,8 +44,9 @@ pub fn process_buffer(
 
     // process it using some model + draw overlays on the output image
     let mut tracker = tracker.lock().unwrap();
-    let processed =
+    let (processed, bboxes) =
         inference::infer_on_image(session, Some(&mut *tracker), image, &mut frame_times).unwrap();
+    bboxes_by_frames.push(bboxes);
 
     // overwrite the buffer with our overlaid processed image
     let start = Instant::now();
@@ -74,9 +77,19 @@ pub fn process_video(input: &Path, live_playback: bool, session: Session) -> any
 
     // Build gst pipeline, which performs inference using the loaded model.
     let scoped_agg = Arc::clone(&agg_times);
+    let bboxes_by_frames = Arc::new(Mutex::new(Vec::new()));
+    let scoped_bboxes = Arc::clone(&bboxes_by_frames);
     let pipeline = build_pipeline(input.to_str().unwrap(), live_playback, move |buf| {
         let mut agg_times = scoped_agg.lock().unwrap();
-        process_buffer(frame_dims, &session, &tracker, &mut agg_times, buf);
+        let mut bboxes_by_frames = scoped_bboxes.lock().unwrap();
+        process_buffer(
+            frame_dims,
+            &session,
+            &tracker,
+            &mut agg_times,
+            &mut bboxes_by_frames,
+            buf,
+        );
     })?;
     log::info!("Starting gst pipeline");
 
@@ -99,6 +112,14 @@ pub fn process_video(input: &Path, live_playback: bool, session: Session) -> any
             _ => (),
         }
     }
+
+    let bboxes = bboxes_by_frames.lock().unwrap();
+    let output_json_path = input.with_extension("json");
+    log::info!(
+        "Writing output json file, {} frames: {output_json_path:?}",
+        bboxes.len()
+    );
+    serde_json::to_writer(std::fs::File::create(output_json_path)?, &*bboxes)?;
 
     pipeline.set_state(gst::State::Null).unwrap();
 
