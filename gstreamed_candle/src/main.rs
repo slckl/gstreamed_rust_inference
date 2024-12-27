@@ -61,10 +61,15 @@ fn main() -> anyhow::Result<()> {
 
     // Build gst pipeline, which performs inference using the loaded model.
     let scoped_agg = Arc::clone(&agg_times);
-    let pipeline = build_pipeline(args.input.to_str().unwrap(), false, move |buf| {
-        let mut agg_times = scoped_agg.lock().unwrap();
-        inference::process_buffer(frame_dims, &model, &device, &tracker, &mut agg_times, buf);
-    })?;
+    let pipeline = build_pipeline(
+        args.input.to_str().unwrap(),
+        args.input.with_extension("out.mkv").to_str().unwrap(),
+        false,
+        move |buf| {
+            let mut agg_times = scoped_agg.lock().unwrap();
+            inference::process_buffer(frame_dims, &model, &device, &tracker, &mut agg_times, buf);
+        },
+    )?;
 
     // Make it play and listen to events to know when it's done.
     pipeline.set_state(gst::State::Playing).unwrap();

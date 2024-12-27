@@ -57,6 +57,7 @@ fn file_src_bin(input_file: &str) -> Result<gst::Element, glib::BoolError> {
 /// with live playback of the annotated output.
 pub fn build_pipeline(
     input_file: &str,
+    output_file: &str,
     live_playback: bool,
     buffer_processor: impl Fn(&mut Buffer) + Send + Sync + 'static,
 ) -> Result<gst::Pipeline, glib::BoolError> {
@@ -107,8 +108,7 @@ pub fn build_pipeline(
     encoder.set_property_from_str("bitrate", "8192");
     let mkv_mux = gst::ElementFactory::make_with_name("matroskamux", None)?;
     let file_sink = gst::ElementFactory::make_with_name("filesink", None)?;
-    let output_path = format!("{input_file}.out.mkv");
-    file_sink.set_property_from_str("location", &output_path);
+    file_sink.set_property_from_str("location", output_file);
 
     // FIXME live playback branch in parallel with encoding has very bad performance,
     //  whereas standalone it worked fine.

@@ -1,7 +1,9 @@
 //! Lifted wholesale from candle-transformers to avoid candle-transformers dependency for ort version.
 
+use serde::{Deserialize, Serialize};
+
 /// A bounding box around an object.
-#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct Bbox {
     pub xmin: f32,
     pub ymin: f32,
@@ -14,7 +16,7 @@ pub struct Bbox {
     pub tracker_id: Option<i64>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Deserialize, Serialize)]
 pub struct KeyPoint {
     pub x: f32,
     pub y: f32,
@@ -59,3 +61,6 @@ pub fn non_maximum_suppression(bboxes: &mut [Vec<Bbox>], threshold: f32) {
         bboxes_for_class.truncate(current_index);
     }
 }
+
+/// Type alias for a list of bboxes grouped by class.
+pub type BBoxesByClass = Vec<Vec<Bbox>>;

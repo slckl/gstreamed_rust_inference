@@ -2,10 +2,13 @@ use std::time::Instant;
 
 use fast_image_resize::{ResizeOptions, Resizer};
 use gstreamed_common::{
-    annotate::annotate_image_with_bboxes, bbox::Bbox, coco_classes, frame_times::FrameTimes,
+    annotate::annotate_image_with_bboxes,
+    bbox::{BBoxesByClass, Bbox},
+    coco_classes,
+    frame_times::FrameTimes,
     img_dimensions::ImgDimensions,
 };
-use gstreamed_tracker::{similari::prelude::Sort, unflatten_bboxes, BBoxesByClass};
+use gstreamed_tracker::{similari::prelude::Sort, unflatten_bboxes};
 use image::{DynamicImage, GenericImageView, RgbImage};
 use ndarray::{Array, Array4, CowArray};
 use ort::session::Session;

@@ -2,7 +2,7 @@
 
 use std::sync::Mutex;
 
-use gstreamed_common::bbox::Bbox;
+use gstreamed_common::bbox::{BBoxesByClass, Bbox};
 use gstreamed_common::coco_classes;
 use gstreamed_common::img_dimensions::ImgDimensions;
 use similari::prelude::PositionalMetricType::IoU;
@@ -98,9 +98,6 @@ pub fn predict_tracked_bboxes(
     log::trace!("{tracks:?}");
     tracks_to_bboxes(&tracks, scaled_dims)
 }
-
-/// Type alias for a list of bboxes grouped by class.
-pub type BBoxesByClass = Vec<Vec<Bbox>>;
 
 /// Transform a flat list of [Bbox] back into bboxes grouped by class.
 ///
