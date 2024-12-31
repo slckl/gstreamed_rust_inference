@@ -10,3 +10,4 @@ candle.sh
 /_dot
 fix_ort_hack.sh
 *.json
+*.rrd
