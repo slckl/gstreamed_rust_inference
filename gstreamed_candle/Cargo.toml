@@ -11,11 +11,11 @@ gstreamed_common.workspace = true
 gstreamed_tracker.workspace = true
 # ext
 anyhow = { version = "1.0.75", features = ["backtrace"] }
-candle-core = { version = "0.8.1", features = ["cuda", "cudnn"] }
-candle-nn = { version = "0.8.1", features = ["cuda"] }
+candle-core = { version = "0.8.2", features = ["cuda", "cudnn"] }
+candle-nn = { version = "0.8.2", features = ["cuda"] }
 clap = { version = "4.4.3", features = ["derive"] }
 gstreamer.workspace = true
-hf-hub = "0.3.2"
+hf-hub = "0.4.1"
 image.workspace = true
 log = "0.4.22"
 tracing = { version = "0.1.40" }
