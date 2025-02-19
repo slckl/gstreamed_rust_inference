@@ -8,5 +8,5 @@ edition = "2021"
 gstreamed_common.workspace = true
 # external
 clap = { version = "4.5.23", features = ["derive"] }
-rerun = { version = "0.21.0" }
+rerun = { version = "0.22.0" }
 serde_json = { version = "1.0.134" }

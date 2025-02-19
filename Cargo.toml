@@ -5,7 +5,7 @@ members = [
     "gstreamed_common",
     "gstreamed_tracker",
     "gstreamed_ort", 
-    "into_rerun",
+    "into_rerun", "ffmpeg_ort",
 ]
 
 [workspace.dependencies]

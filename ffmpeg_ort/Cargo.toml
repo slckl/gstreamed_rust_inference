@@ -1,0 +1,9 @@
+[package]
+name = "ffmpeg_ort"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = { version = "1.0.75", features = ["backtrace"] }
+clap = { version = "4.4.3", features = ["derive"] }
+ffmpeg-next = { version = "7.1.0" }
