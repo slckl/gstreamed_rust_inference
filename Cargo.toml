@@ -4,8 +4,9 @@ members = [
     "gstreamed_candle",
     "gstreamed_common",
     "gstreamed_tracker",
-    "gstreamed_ort", 
-    "into_rerun", "ffmpeg_ort",
+    "gstreamed_ort",
+    "into_rerun",
+    "ffmpeg_ort",
 ]
 
 [workspace.dependencies]
@@ -13,9 +14,11 @@ members = [
 gstreamed_common = { path = "gstreamed_common" }
 gstreamed_tracker = { path = "gstreamed_tracker" }
 # external dependencies
-gstreamer = { version = "0.23.4" }
-image = { version = "0.25.5", default-features = false, features = [
+clap = { version = "4.5.36", features = ["derive"] }
+gstreamer = { version = "0.23.5" }
+image = { version = "0.25.6", default-features = false, features = [
     "jpeg",
     "png",
 ] }
 imageproc = { version = "0.25.0", default-features = false }
+log = { version = "0.4.27" }
