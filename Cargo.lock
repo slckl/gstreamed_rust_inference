@@ -2452,6 +2452,8 @@ dependencies = [
  "anyhow",
  "clap",
  "ffmpeg-next",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
@@ -5471,6 +5473,10 @@ dependencies = [
  "tar",
  "ureq",
 ]
+
+[[package]]
+name = "ort_common"
+version = "0.1.0"
 
 [[package]]
 name = "overload"

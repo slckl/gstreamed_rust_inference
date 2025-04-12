@@ -23,5 +23,5 @@ ort = { version = "2.0.0-rc.9", default-features = true, features = [
     "cuda",
 ] }
 serde_json = { version = "1.0.134" }
-tracing = { version = "0.1.40" }
-tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
+tracing.workspace = true
+tracing-subscriber.workspace = true

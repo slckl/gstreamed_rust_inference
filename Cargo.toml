@@ -1,12 +1,13 @@
 [workspace]
 resolver = "2"
 members = [
+    "ffmpeg_ort",
     "gstreamed_candle",
     "gstreamed_common",
     "gstreamed_tracker",
     "gstreamed_ort",
     "into_rerun",
-    "ffmpeg_ort",
+    "ort_common",
 ]
 
 [workspace.dependencies]
@@ -22,3 +23,5 @@ image = { version = "0.25.6", default-features = false, features = [
 ] }
 imageproc = { version = "0.25.0", default-features = false }
 log = { version = "0.4.27" }
+tracing = { version = "0.1.41" }
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
