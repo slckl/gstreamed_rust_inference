@@ -9,19 +9,17 @@ edition = "2021"
 # workspace
 gstreamed_common.workspace = true
 gstreamed_tracker.workspace = true
+ort_common.workspace = true
 # ext
-anyhow = { version = "1.0.75", features = ["backtrace"] }
+anyhow.workspace = true
 clap.workspace = true
 fast_image_resize = { version = "5.1.0", features = ["image"] }
 gstreamer.workspace = true
 image.workspace = true
 imageproc.workspace = true
 log.workspace = true
-ndarray = { version = "0.16.1" }
-ort = { version = "2.0.0-rc.9", default-features = true, features = [
-    "ndarray",
-    "cuda",
-] }
+ndarray.workspace = true
+ort.workspace = true
 serde_json = { version = "1.0.134" }
 tracing.workspace = true
 tracing-subscriber.workspace = true

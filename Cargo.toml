@@ -14,7 +14,9 @@ members = [
 # internal dependencies
 gstreamed_common = { path = "gstreamed_common" }
 gstreamed_tracker = { path = "gstreamed_tracker" }
+ort_common = { path = "ort_common" }
 # external dependencies
+anyhow = { version = "1.0.97", features = ["backtrace"] }
 clap = { version = "4.5.36", features = ["derive"] }
 gstreamer = { version = "0.23.5" }
 image = { version = "0.25.6", default-features = false, features = [
@@ -23,5 +25,10 @@ image = { version = "0.25.6", default-features = false, features = [
 ] }
 imageproc = { version = "0.25.0", default-features = false }
 log = { version = "0.4.27" }
+ndarray = { version = "0.16.1" }
+ort = { version = "2.0.0-rc.9", default-features = true, features = [
+    "ndarray",
+    "cuda",
+] }
 tracing = { version = "0.1.41" }
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }

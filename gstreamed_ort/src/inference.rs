@@ -12,8 +12,7 @@ use gstreamed_tracker::{similari::prelude::Sort, unflatten_bboxes};
 use image::{DynamicImage, GenericImageView, RgbImage};
 use ndarray::{Array, Array4, CowArray};
 use ort::session::Session;
-
-use crate::yolo_parser::parse_predictions;
+use ort_common::yolo_parser::parse_predictions;
 
 /// Transforms the input `image` by converting colors, resizing and loading the image buffer into an [Array].
 ///

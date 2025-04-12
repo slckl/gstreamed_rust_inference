@@ -1,7 +1,6 @@
 mod inference;
 mod process_image;
 mod process_video;
-mod yolo_parser;
 
 use std::path::PathBuf;
 
