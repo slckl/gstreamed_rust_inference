@@ -1,5 +1,6 @@
 extern crate ffmpeg_next as ffmpeg;
 
+use clap::Parser;
 use ffmpeg::format::{input, Pixel};
 use ffmpeg::media::Type;
 use ffmpeg::software::scaling::{context::Context, flag::Flags};
@@ -7,9 +8,34 @@ use ffmpeg::util::frame::video::Video;
 use std::env;
 use std::fs::File;
 use std::io::prelude::*;
+use std::path::PathBuf;
+use tracing_subscriber::prelude::*;
 
-// FIXME this is just ffmpeg example copypasta for now
+#[derive(Debug, Parser)]
+pub struct Args {
+    /// Path to input image (.jpeg/.png) or video file (.mp4/.mkv).
+    input: PathBuf,
+    /// Whether to attempt to use `cuda` hw acceleration.
+    /// This may silently fail and fallback to cpu acceleration presently.
+    #[arg(long, action, default_value = "false")]
+    cuda: bool,
+    /// Yolov8 onnx model file to use.
+    #[arg(long, short, default_value = "_models/yolov8s.onnx")]
+    model: String,
+}
+
 fn main() -> anyhow::Result<()> {
+    // Initialize logging.
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "warn,gstreamed_ort=info".into()),
+        )
+        .with(tracing_subscriber::fmt::layer())
+        .init();
+
+    let args = Args::parse();
+
     ffmpeg::init().unwrap();
 
     if let Ok(mut ictx) = input(&env::args().nth(1).expect("Cannot open file.")) {

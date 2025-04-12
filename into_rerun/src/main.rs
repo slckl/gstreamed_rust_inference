@@ -28,7 +28,7 @@ fn main() {
     let video_meta = read_video_meta(&args.input);
     // Create a rerun log, stream it to disk at output location.
     let rec = rerun::RecordingStreamBuilder::new("gstreamed_rust_inference")
-    .save(&args.output)
+        .save(&args.output)
         .unwrap();
 
     // Add input video as a video asset.
@@ -41,7 +41,6 @@ fn main() {
         rec.log("video", &VideoFrameReference::new(frame.pts as i64))
             .unwrap();
         // rr.log(format!("bboxes/{idx}"), Boxes2D::)
-
     }
 
     println!("Finished writing rerun log to {:?}", args.output);

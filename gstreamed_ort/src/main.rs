@@ -10,7 +10,7 @@ use ort::execution_providers::CPUExecutionProvider;
 use ort::execution_providers::CUDAExecutionProvider;
 use ort::session::builder::GraphOptimizationLevel;
 use ort::session::builder::SessionBuilder;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use tracing_subscriber::prelude::*;
 
 #[derive(Debug, Parser)]
 pub struct Args {
