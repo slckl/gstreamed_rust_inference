@@ -6,6 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+# workspace
+inference_common.workspace = true
+# external
 ab_glyph = { version = "0.2.28" }
 anyhow.workspace = true
 gstreamer.workspace = true

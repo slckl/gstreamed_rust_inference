@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 # workspace
 gstreamed_common.workspace = true
-gstreamed_tracker.workspace = true
+inference_common.workspace = true
 ort_common.workspace = true
 # ext
 anyhow.workspace = true

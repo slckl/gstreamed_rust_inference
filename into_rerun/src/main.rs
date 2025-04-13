@@ -5,7 +5,7 @@ use std::{
 };
 
 use clap::Parser;
-use gstreamed_common::video_meta::VideoMeta;
+use inference_common::video_meta::VideoMeta;
 use rerun::{AssetVideo, Boxes2D, VideoFrameReference};
 
 #[derive(Debug, Parser)]

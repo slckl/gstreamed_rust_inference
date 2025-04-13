@@ -1,11 +1,11 @@
 use std::time::Instant;
 
-use gstreamed_common::{
-    bbox::{non_maximum_suppression, Bbox},
+use inference_common::{
+    bbox::{Bbox, non_maximum_suppression},
     frame_times::FrameTimes,
     img_dimensions::ImgDimensions,
 };
-use ndarray::{s, ArrayView, Axis, Dim, IxDyn};
+use ndarray::{ArrayView, Axis, Dim, IxDyn, s};
 
 /// Parse yolov8 predictions via `ort`.
 pub fn parse_predictions(

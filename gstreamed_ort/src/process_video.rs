@@ -3,14 +3,15 @@ use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
-use gstreamed_common::frame_meta::FrameMeta;
-use gstreamed_common::frame_times::{AggregatedTimes, FrameTimes};
-use gstreamed_common::video_meta::VideoMeta;
-use gstreamed_common::{discovery, img_dimensions::ImgDimensions, pipeline::build_pipeline};
-use gstreamed_tracker::similari::prelude::Sort;
+use gstreamed_common::{discovery, pipeline::build_pipeline};
 use gstreamer::{self as gst};
 use gstreamer::{prelude::*, MessageView};
 use image::{DynamicImage, RgbImage};
+use inference_common::frame_meta::FrameMeta;
+use inference_common::frame_times::{AggregatedTimes, FrameTimes};
+use inference_common::img_dimensions::ImgDimensions;
+use inference_common::tracker::similari::prelude::Sort;
+use inference_common::video_meta::VideoMeta;
 use ort::session::Session;
 
 use crate::inference;
@@ -81,7 +82,7 @@ pub fn process_video(input: &Path, live_playback: bool, session: Session) -> any
     let output_path = input.with_extension("out.mkv");
 
     // Configure tracker, we use similari library, which provides iou/sort trackers.
-    let tracker = gstreamed_tracker::sort_tracker();
+    let tracker = inference_common::tracker::sort_tracker();
 
     // Build gst pipeline, which performs inference using the loaded model.
     let scoped_agg = Arc::clone(&agg_times);

@@ -1,5 +1,5 @@
 [package]
-name = "gstreamed_tracker"
+name = "inference_common"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,8 +7,11 @@ edition = "2021"
 
 [dependencies]
 # workspace
-gstreamed_common = { path = "../gstreamed_common" }
 # ext
-anyhow = { version = "1.0.75", features = ["backtrace"] }
-log = "0.4.22"
+ab_glyph = { version = "0.2.29" }
+anyhow.workspace = true
+image.workspace = true
+imageproc.workspace = true
+log.workspace = true
 similari-trackers-rs = { version = "0.26.11", default-features = false }
+serde = { version = "1.0.216", features = ["derive"] }

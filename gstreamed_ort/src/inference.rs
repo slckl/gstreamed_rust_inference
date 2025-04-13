@@ -1,15 +1,15 @@
 use std::time::Instant;
 
 use fast_image_resize::{ResizeOptions, Resizer};
-use gstreamed_common::{
+use image::{DynamicImage, GenericImageView, RgbImage};
+use inference_common::tracker::{similari::prelude::Sort, unflatten_bboxes};
+use inference_common::{
     annotate::annotate_image_with_bboxes,
     bbox::{BBoxesByClass, Bbox},
     coco_classes,
     frame_times::FrameTimes,
     img_dimensions::ImgDimensions,
 };
-use gstreamed_tracker::{similari::prelude::Sort, unflatten_bboxes};
-use image::{DynamicImage, GenericImageView, RgbImage};
 use ndarray::{Array, Array4, CowArray};
 use ort::session::Session;
 use ort_common::yolo_parser::parse_predictions;
@@ -143,7 +143,7 @@ pub fn infer_on_image(
     let mut tracked_bboxes: Option<Vec<Bbox>> = None;
     if let Some(tracker) = tracker {
         let start = Instant::now();
-        tracked_bboxes = Some(gstreamed_tracker::predict_tracked_bboxes(
+        tracked_bboxes = Some(inference_common::tracker::predict_tracked_bboxes(
             tracker,
             scaled_dims,
             &bboxes,

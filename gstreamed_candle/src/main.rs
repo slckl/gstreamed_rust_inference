@@ -5,12 +5,12 @@ use crate::inference::Which;
 use candle_core::Device;
 use clap::Parser;
 use gstreamed_common::discovery;
-use gstreamed_common::frame_times::AggregatedTimes;
-use gstreamed_common::img_dimensions::ImgDimensions;
 use gstreamed_common::pipeline::build_pipeline;
 use gstreamer as gst;
 use gstreamer::prelude::*;
 use gstreamer::MessageView;
+use inference_common::frame_times::AggregatedTimes;
+use inference_common::img_dimensions::ImgDimensions;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -57,7 +57,7 @@ fn main() -> anyhow::Result<()> {
     let agg_times = Arc::new(Mutex::new(AggregatedTimes::default()));
 
     // Use tracker for candle pipeline, too.
-    let tracker = gstreamed_tracker::sort_tracker();
+    let tracker = inference_common::tracker::sort_tracker();
 
     // Build gst pipeline, which performs inference using the loaded model.
     let scoped_agg = Arc::clone(&agg_times);

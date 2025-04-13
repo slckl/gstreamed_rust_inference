@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 # workspace
-gstreamed_common.workspace = true
+inference_common.workspace = true
 # external
 clap = { workspace = true }
 rerun = { version = "0.22.0" }

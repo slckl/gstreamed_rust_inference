@@ -2,9 +2,9 @@
 
 use std::sync::Mutex;
 
-use gstreamed_common::bbox::{BBoxesByClass, Bbox};
-use gstreamed_common::coco_classes;
-use gstreamed_common::img_dimensions::ImgDimensions;
+use crate::bbox::{BBoxesByClass, Bbox};
+use crate::coco_classes;
+use crate::img_dimensions::ImgDimensions;
 use similari::prelude::PositionalMetricType::IoU;
 use similari::prelude::{SortTrack, Universal2DBox};
 use similari::trackers::sort::metric::DEFAULT_MINIMAL_SORT_CONFIDENCE;

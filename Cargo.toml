@@ -4,8 +4,8 @@ members = [
     "ffmpeg_ort",
     "gstreamed_candle",
     "gstreamed_common",
-    "gstreamed_tracker",
     "gstreamed_ort",
+    "inference_common",
     "into_rerun",
     "ort_common",
 ]
@@ -13,7 +13,7 @@ members = [
 [workspace.dependencies]
 # internal dependencies
 gstreamed_common = { path = "gstreamed_common" }
-gstreamed_tracker = { path = "gstreamed_tracker" }
+inference_common = { path = "inference_common" }
 ort_common = { path = "ort_common" }
 # external dependencies
 anyhow = { version = "1.0.97", features = ["backtrace"] }

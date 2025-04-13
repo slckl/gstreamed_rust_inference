@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use gstreamed_common::{frame_meta::FrameMeta, frame_times::FrameTimes};
+use inference_common::{frame_meta::FrameMeta, frame_times::FrameTimes};
 use ort::session::Session;
 
 use crate::inference;

@@ -9,14 +9,14 @@ use std::time::Instant;
 use candle_core::{DType, Device, IndexOp, Module, Tensor};
 use candle_nn::VarBuilder;
 use clap::ValueEnum;
-use gstreamed_common::bbox::{non_maximum_suppression, Bbox};
-use gstreamed_common::frame_times::AggregatedTimes;
-use gstreamed_common::img_dimensions::ImgDimensions;
-use gstreamed_common::{annotate::annotate_image_with_bboxes, frame_times::FrameTimes};
-use gstreamed_tracker::similari::prelude::Sort;
-use gstreamed_tracker::unflatten_bboxes;
 use gstreamer as gst;
 use image::{DynamicImage, RgbImage};
+use inference_common::bbox::{non_maximum_suppression, Bbox};
+use inference_common::frame_times::AggregatedTimes;
+use inference_common::img_dimensions::ImgDimensions;
+use inference_common::tracker::similari::prelude::Sort;
+use inference_common::tracker::unflatten_bboxes;
+use inference_common::{annotate::annotate_image_with_bboxes, frame_times::FrameTimes};
 
 use crate::yolov8::{Multiples, YoloV8};
 
@@ -170,7 +170,7 @@ pub fn process_frame(
 
     // Track bboxes.
     let start = Instant::now();
-    let tracked_bboxes = gstreamed_tracker::predict_tracked_bboxes(
+    let tracked_bboxes = inference_common::tracker::predict_tracked_bboxes(
         tracker,
         ImgDimensions::new(scaled_width as f32, scaled_height as f32),
         &bboxes_per_class,
