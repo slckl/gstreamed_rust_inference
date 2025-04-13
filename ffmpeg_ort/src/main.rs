@@ -5,7 +5,8 @@ use ffmpeg::format::{input, Pixel};
 use ffmpeg::media::Type;
 use ffmpeg::software::scaling::{context::Context, flag::Flags};
 use ffmpeg::util::frame::video::Video;
-use std::env;
+use ort::execution_providers::{CPUExecutionProvider, CUDAExecutionProvider};
+use ort::session::builder::{GraphOptimizationLevel, SessionBuilder};
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::PathBuf;
@@ -36,9 +37,28 @@ fn main() -> anyhow::Result<()> {
 
     let args = Args::parse();
 
+    // Load model into ort.
+    let (ep, ep_name) = if args.cuda {
+        (CUDAExecutionProvider::default().build(), "cuda")
+    } else {
+        (CPUExecutionProvider::default().build(), "cpu")
+    };
+
+    let session = SessionBuilder::new()?
+        .with_optimization_level(GraphOptimizationLevel::Level3)?
+        // .with_intra_threads(1)?
+        .commit_from_file(&args.model)?;
+    log::debug!("{session:?}");
+
+    log::info!(
+        "Prepared ort {ep_name} session with model: {:?}",
+        args.model
+    );
+
+    // Initialize ffmpeg and open video.
     ffmpeg::init().unwrap();
 
-    if let Ok(mut ictx) = input(&env::args().nth(1).expect("Cannot open file.")) {
+    if let Ok(mut ictx) = input(&args.input) {
         let input = ictx
             .streams()
             .best(Type::Video)

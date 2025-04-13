@@ -7,5 +7,7 @@ edition = "2021"
 anyhow = { version = "1.0.75", features = ["backtrace"] }
 clap.workspace = true
 ffmpeg-next = { version = "7.1.0" }
+log.workspace = true
+ort.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true

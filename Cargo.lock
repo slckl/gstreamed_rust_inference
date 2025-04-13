@@ -2452,6 +2452,8 @@ dependencies = [
  "anyhow",
  "clap",
  "ffmpeg-next",
+ "log",
+ "ort",
  "tracing",
  "tracing-subscriber",
 ]
