@@ -6,7 +6,7 @@ use ort::session::Session;
 use crate::inference;
 
 /// Performs inference on a single image file.
-pub fn process_image(path: &Path, session: &Session) -> anyhow::Result<()> {
+pub fn process_image(path: &Path, mut session: Session) -> anyhow::Result<()> {
     let mut frame_times = FrameTimes::default();
 
     // Read image.
@@ -14,7 +14,7 @@ pub fn process_image(path: &Path, session: &Session) -> anyhow::Result<()> {
 
     // Process image.
     let (img, bboxes) =
-        inference::infer_on_image(session, None, og_image.clone(), &mut frame_times)?;
+        inference::infer_on_image(&mut session, None, og_image.clone(), &mut frame_times)?;
     // NB! For a single image, ort times will be misleading,
     // as the first time it's used, it does all kinds of lazy init.
     log::debug!("{frame_times:?}");

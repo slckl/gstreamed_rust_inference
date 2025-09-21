@@ -63,7 +63,7 @@ fn main() -> anyhow::Result<()> {
 
     match args.input.extension().and_then(|os_str| os_str.to_str()) {
         Some("mp4" | "mkv") => process_video::process_video(&args.input, args.live, session)?,
-        Some("jpeg" | "jpg" | "png") => process_image::process_image(&args.input, &session)?,
+        Some("jpeg" | "jpg" | "png") => process_image::process_image(&args.input, session)?,
         Some(unk) => log::error!("Unhandled file extension: {unk}"),
         None => log::error!(
             "Input path does not have valid file extension: {:?}",

@@ -26,7 +26,7 @@ image = { version = "0.25.6", default-features = false, features = [
 imageproc = { version = "0.25.0", default-features = false }
 log = { version = "0.4.27" }
 ndarray = { version = "0.16.1" }
-ort = { version = "2.0.0-rc.9", default-features = true, features = [
+ort = { version = "2.0.0-rc.10", default-features = true, features = [
     "ndarray",
     "cuda",
 ] }

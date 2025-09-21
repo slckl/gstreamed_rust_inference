@@ -12,6 +12,7 @@ use inference_common::{
 };
 use ndarray::{Array, Array4, CowArray};
 use ort::session::Session;
+use ort::value::TensorRef;
 use ort_common::yolo_parser::parse_predictions;
 
 /// Transforms the input `image` by converting colors, resizing and loading the image buffer into an [Array].
@@ -91,7 +92,7 @@ fn preprocess_image(
 }
 
 pub fn infer_on_image(
-    session: &Session,
+    session: &mut Session,
     tracker: Option<&mut Sort>,
     og_image: DynamicImage,
     frame_times: &mut FrameTimes,
@@ -109,13 +110,13 @@ pub fn infer_on_image(
     log::debug!("image_array.shape: {:?}", scaled_image_array.shape());
     log::debug!("image_array.strides: {:?}", scaled_image_array.strides());
 
-    let input = ort::inputs![&scaled_image_array]?;
+    let input = ort::inputs![TensorRef::from_array_view(&scaled_image_array)?];
     frame_times.buffer_to_tensor = start.elapsed();
 
     // Now, we can finally run inference.
     let start = Instant::now();
     let outputs = session.run(input)?;
-    let outputs = outputs[0].try_extract_tensor()?;
+    let outputs = outputs[0].try_extract_array::<f32>()?;
     frame_times.forward_pass = start.elapsed();
     // output shape is 1 x 84 x 5040
     // AKA [bsz, embedding, anchors]

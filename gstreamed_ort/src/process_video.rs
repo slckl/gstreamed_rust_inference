@@ -18,7 +18,7 @@ use crate::inference;
 
 pub fn process_buffer(
     frame_dims: ImgDimensions,
-    session: &Session,
+    session: &mut Session,
     // TODO make tracking optional
     tracker: &Mutex<Sort>,
     agg_times: &mut AggregatedTimes,
@@ -93,6 +93,8 @@ pub fn process_video(input: &Path, live_playback: bool, session: Session) -> any
         frame_dims.height as u32,
     )));
     let scoped_meta = Arc::clone(&video_meta);
+    // FIXME can we do it without Mutex? it's not gonna be contested much, tho...
+    let session = Arc::new(Mutex::new(session));
     let pipeline = build_pipeline(
         input.to_str().unwrap(),
         output_path.to_str().unwrap(),
@@ -100,9 +102,10 @@ pub fn process_video(input: &Path, live_playback: bool, session: Session) -> any
         move |buf| {
             let mut agg_times = scoped_agg.lock().unwrap();
             let mut video_meta = scoped_meta.lock().unwrap();
+            let mut session = session.lock().unwrap();
             process_buffer(
                 frame_dims,
-                &session,
+                &mut session,
                 &tracker,
                 &mut agg_times,
                 &mut video_meta,
