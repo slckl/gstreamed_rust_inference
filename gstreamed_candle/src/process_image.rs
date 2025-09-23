@@ -12,21 +12,17 @@ pub fn process_image(path: &Path, model: YoloV8, device: Device) -> anyhow::Resu
     // Read image.
     let og_image = image::open(path)?;
 
-    // Tracking on a single image isn't super meaningful, but we keep it for parity.
-    let tracker = inference_common::tracker::sort_tracker();
-    let (annotated, bboxes) = {
-        let mut t = tracker.lock().unwrap();
-        inference::process_frame(
-            og_image,
-            &model,
-            &device,
-            &mut t,
-            0.25,
-            0.45,
-            14,
-            &mut frame_times,
-        )?
-    };
+    // Process frame without tracking since it's meaningless for a single image
+    let (annotated, bboxes) = inference::process_frame(
+        og_image,
+        &model,
+        &device,
+        None,
+        0.25,
+        0.45,
+        14,
+        &mut frame_times,
+    )?;
 
     // Save output: annotated image & bboxes.
     let img_output_path = path.with_extension("out.jpg");

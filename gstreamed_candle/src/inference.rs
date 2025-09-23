@@ -118,13 +118,14 @@ fn post_process_preds(
 /// Run yolov8 inference, draw detections on top of the frame and return both
 /// the annotated image and bboxes (grouped by class).
 ///
+/// If tracker is None, tracking is skipped (useful for single image processing).
 /// Largely copypasta of report_detect in candle yolov8 example code.
 #[allow(clippy::too_many_arguments)]
 pub fn process_frame(
     frame: DynamicImage,
     model: &YoloV8,
     device: &Device,
-    tracker: &mut Sort,
+    tracker: Option<&mut Sort>,
     conf_thresh: f32,
     nms_thresh: f32,
     legend_size: u32,
@@ -169,17 +170,23 @@ pub fn process_frame(
     // Postprocess predictions into bboxes.
     let bboxes_per_class = post_process_preds(&predictions, conf_thresh, nms_thresh, frame_times)?;
 
-    // Track bboxes.
-    let start = Instant::now();
-    let tracked_bboxes = inference_common::tracker::predict_tracked_bboxes(
-        tracker,
-        ImgDimensions::new(scaled_width as f32, scaled_height as f32),
-        &bboxes_per_class,
-    );
-    frame_times.tracking = start.elapsed();
+    // Track bboxes if tracker is provided.
+    let bboxes_per_class = if let Some(tracker) = tracker {
+        let start = Instant::now();
+        let tracked_bboxes = inference_common::tracker::predict_tracked_bboxes(
+            tracker,
+            ImgDimensions::new(scaled_width as f32, scaled_height as f32),
+            &bboxes_per_class,
+        );
+        frame_times.tracking = start.elapsed();
 
-    // Unflatten tracked bboxes back into bboxes per class.
-    let bboxes_per_class = unflatten_bboxes(tracked_bboxes);
+        // Unflatten tracked bboxes back into bboxes per class.
+        unflatten_bboxes(tracked_bboxes)
+    } else {
+        // Skip tracking
+        frame_times.tracking = std::time::Duration::ZERO;
+        bboxes_per_class
+    };
 
     // Annotate the original image and print boxes information.
     let start = Instant::now();
@@ -229,7 +236,7 @@ pub fn process_buffer(
         image,
         model,
         device,
-        &mut tracker,
+        Some(&mut tracker),
         0.25,
         0.45,
         14,
