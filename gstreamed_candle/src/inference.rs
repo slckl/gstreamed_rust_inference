@@ -11,7 +11,7 @@ use candle_nn::VarBuilder;
 use clap::ValueEnum;
 use gstreamer as gst;
 use image::{DynamicImage, RgbImage};
-use inference_common::bbox::{non_maximum_suppression, Bbox};
+use inference_common::bbox::{non_maximum_suppression, BBoxesByClass, Bbox};
 use inference_common::frame_times::AggregatedTimes;
 use inference_common::img_dimensions::ImgDimensions;
 use inference_common::tracker::similari::prelude::Sort;
@@ -115,7 +115,8 @@ fn post_process_preds(
     Ok(bboxes)
 }
 
-/// Run yolov8 inference, and draw detections on top of the frame.
+/// Run yolov8 inference, draw detections on top of the frame and return both
+/// the annotated image and bboxes (grouped by class).
 ///
 /// Largely copypasta of report_detect in candle yolov8 example code.
 #[allow(clippy::too_many_arguments)]
@@ -128,7 +129,7 @@ pub fn process_frame(
     nms_thresh: f32,
     legend_size: u32,
     frame_times: &mut FrameTimes,
-) -> anyhow::Result<DynamicImage> {
+) -> anyhow::Result<(DynamicImage, BBoxesByClass)> {
     // Resize buffer to match input size of model.
     let start = Instant::now();
     let (scaled_width, scaled_height) = {
@@ -191,8 +192,8 @@ pub fn process_frame(
     );
     frame_times.annotation = start.elapsed();
 
-    // Return processed image tensor.
-    Ok(annotated)
+    // Return processed image tensor + bboxes.
+    Ok((annotated, bboxes_per_class))
 }
 
 pub fn process_buffer(
@@ -224,7 +225,7 @@ pub fn process_buffer(
 
     // process it using some model + draw overlays on the output image
     let mut tracker = tracker.lock().unwrap();
-    let processed = process_frame(
+    let (processed, _bboxes) = process_frame(
         image,
         model,
         device,
